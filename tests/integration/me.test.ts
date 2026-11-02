@@ -217,27 +217,46 @@ describe("personal profile and settings", () => {
       .toEqual({ username: expected.username, likes_public: false });
   });
 
-  it("returns unresolved notices, omits lifted/overturned records and never includes another user's notices", async () => {
+  it("returns open notices, omits lifted, expired, overturned, appealed and stale records and never includes another user's notices", async () => {
     const user = await newUser();
     const other = await newUser();
     const expected = await expectedMe(user);
-    async function violation(owner: TestUser, overturned = false) {
+    const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+    async function violation(owner: TestUser, fields: { overturned_at?: string; created_at?: string } = {}) {
       const row = await checked(admin.from("moderation_cases").insert({ target_type: "comment", target_id: randomUUID(), status: "resolved", resolution: "uphold" }).select("id").single());
       cases.push(row.id);
-      return checked(admin.from("violations").insert({ user_id: owner.id, case_id: row.id, reason: "spam", counts_as_strike: false, ...(overturned ? { overturned_at: new Date().toISOString() } : {}) }).select("id, created_at").single());
+      return checked(admin.from("violations").insert({ user_id: owner.id, case_id: row.id, reason: "spam", counts_as_strike: false, ...fields }).select("id, created_at").single());
     }
-    const removal = await violation(user);
-    const linked = await violation(user);
-    await violation(user, true);
+    async function sanction(fields: { user_id?: string; violation_id?: string; starts_at?: string; ends_at?: string; lifted_at?: string }) {
+      return checked(admin.from("sanctions").insert({ user_id: user.id, kind: "submit_suspension", source: "manual", reason: "fixture", ...fields }).select("id, starts_at").single());
+    }
+    async function appeal(violationId: string, fields: { status?: "rejected"; decided_at?: string } = {}) {
+      await checked(admin.from("appeals").insert({ user_id: user.id, violation_id: violationId, statement: "這則留言沒有違反任何社群規範，請協助重新審視。", ...fields }));
+    }
+
+    const open = await violation(user);
+    const nearlyStale = await violation(user, { created_at: daysAgo(29) });
+    const appealPending = await violation(user);
+    await appeal(appealPending.id);
+    const appealDecided = await violation(user);
+    await appeal(appealDecided.id, { status: "rejected", decided_at: new Date().toISOString() });
+    await violation(user, { created_at: daysAgo(31) });
+    await violation(user, { overturned_at: new Date().toISOString() });
     await violation(other);
-    const starts = "2020-01-02T03:04:05.123456Z";
-    const sanction = await checked(admin.from("sanctions").insert({ user_id: user.id, violation_id: linked.id, kind: "submit_suspension", source: "manual", reason: "fixture", starts_at: starts, ends_at: "2020-01-03T00:00:00Z" }).select("id").single());
-    await checked(admin.from("sanctions").insert({ user_id: user.id, kind: "submit_suspension", source: "manual", reason: "lifted", lifted_at: new Date().toISOString() }));
-    await checked(admin.from("sanctions").insert({ user_id: other.id, kind: "submit_suspension", source: "manual", reason: "other" }));
-    expectSuccess(await call("/v1/me", { token: user.token }), { ...expected, pending_notices: [
-      { type: "removal", id: removal.id, created_at: new Date(removal.created_at).toISOString() },
-      { type: "sanction", id: sanction.id, created_at: new Date(starts).toISOString() },
-    ] });
+
+    const running = await sanction({ starts_at: "2020-01-02T03:04:05.123456Z", ends_at: new Date(Date.now() + 86_400_000).toISOString() });
+    const permanent = await sanction({ starts_at: "2020-01-02T03:04:06.123456Z" });
+    // Its sanction has expired, and that sanction speaks for this removal, so neither appears
+    const linked = await violation(user);
+    await sanction({ violation_id: linked.id, starts_at: "2020-01-02T03:04:07.123456Z", ends_at: "2020-01-03T00:00:00Z" });
+    await sanction({ lifted_at: new Date().toISOString() });
+    await sanction({ user_id: other.id });
+
+    const notices = [
+      ...[open, nearlyStale, appealPending].map((row) => ({ type: "removal", id: row.id, created_at: new Date(row.created_at).toISOString() })),
+      ...[running, permanent].map((row) => ({ type: "sanction", id: row.id, created_at: new Date(row.starts_at).toISOString() })),
+    ].sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    expectSuccess(await call("/v1/me", { token: user.token }), { ...expected, pending_notices: notices });
   });
 });
 
