@@ -16,7 +16,7 @@ export const categoryList = z
 
 export const lengthParam = z.coerce.number().int().min(1).max(100);
 
-function textField(min: number, max: number, extra?: (value: string) => boolean) {
+export function textField(min: number, max: number, extra?: (value: string) => boolean) {
   return z
     .string()
     .transform(normalizeText)

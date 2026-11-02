@@ -13,7 +13,10 @@ const TIMESTAMP = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$
 
 const keyset = z.object({
   c: z.string().regex(TIMESTAMP).refine((value) => Number.isFinite(Date.parse(value))),
-  i: z.uuid(),
+  // audit_logs has a bigint key
+  i: z.uuid().or(z.string().regex(/^\d+$/)),
+  // The admin queue also sorts by effective_reporter_count
+  n: z.number().int().nonnegative().optional(),
 });
 
 export type Keyset = z.infer<typeof keyset>;

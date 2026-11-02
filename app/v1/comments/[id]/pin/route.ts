@@ -9,7 +9,7 @@ function setPin(pinned: boolean) {
   return withRoute(
     { auth: "user_or_key", scope: "comments:write", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND" },
     async ({ caller, params, requestId }) => {
-      const commentId = params.id!.toLowerCase();
+      const commentId = params.id!;
       let pinnedAt: string | null;
       try {
         pinnedAt = await rpc("set_comment_pin", { actor: identified(caller).userId, comment_id: commentId, pinned }, { requestId });

@@ -233,7 +233,11 @@ export function withRoute<Query = undefined, Body = undefined>(
       if (config.rejectBanned) await checkNotBanned(caller);
 
       const params = await context.params;
-      if (config.idNotFound && params.id !== undefined && !UUID.test(params.id)) throw new ApiError(config.idNotFound);
+      if (config.idNotFound && params.id !== undefined) {
+        if (!UUID.test(params.id)) throw new ApiError(config.idNotFound);
+        // The pool and responses compare IDs as strings
+        params.id = params.id.toLowerCase();
+      }
 
       const query = config.query ? readQuery(request, config.query) : (undefined as Query);
       const body = config.body ? await readBody(request, config.body) : (undefined as Body);
