@@ -1,0 +1,37 @@
+{
+  "name": "shuoshuo-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": "26.13.0"
+  },
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "node scripts/start.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint:openapi": "spectral lint openapi/openapi.yaml --ruleset .spectral.yaml --fail-severity warn && node scripts/check-contract.mjs",
+    "gen:types": "pnpm dlx --package=openapi-typescript@7.13.0 --package=typescript@5.9.3 openapi-typescript openapi/openapi.yaml -o openapi/types.ts",
+    "gen:db": "supabase gen types typescript --local --schema public --schema private > lib/database.types.ts",
+    "test:db": "supabase test db"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "jose": "6.2.13",
+    "next": "16.4.3",
+    "rate-limiter-flexible": "11.2.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@stoplight/spectral-cli": "6.17.0",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "supabase": "2.122.0",
+    "typescript": "7.0.2",
+    "yaml": "2.9.1"
+  }
+}

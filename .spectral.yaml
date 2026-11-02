@@ -1,0 +1,66 @@
+# SPEC §8.12
+extends: ["spectral:oas"]
+rules:
+  operation-has-error-response:
+    description: Every operation documents at least one error response
+    given: $.paths[*][get,put,post,patch,delete].responses
+    severity: error
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          patternProperties:
+            "^[45][0-9]{2}$": {}
+          minProperties: 2
+  operation-has-rate-limit:
+    description: Every operation names its rate-limit class
+    given: $.paths[*][get,put,post,patch,delete]
+    severity: error
+    then:
+      field: x-rate-limit
+      function: enumeration
+      functionOptions:
+        values: [RL-PUBLIC, RL-USER, RL-WRITE, RL-SENSITIVE, RL-ADMIN, none]
+  operation-has-cache:
+    description: Every operation names its cache class
+    given: $.paths[*][get,put,post,patch,delete]
+    severity: error
+    then:
+      field: x-cache
+      function: enumeration
+      functionOptions:
+        values: [C-NONE, C-5, C-30, C-DAY]
+  operation-has-errors:
+    description: Every operation lists its error codes
+    given: $.paths[*][get,put,post,patch,delete]
+    severity: error
+    then:
+      field: x-errors
+      function: truthy
+  operation-has-code-samples:
+    description: Every operation has curl, JavaScript and Python samples (D-40)
+    given: $.paths[*][get,put,post,patch,delete]
+    severity: error
+    then:
+      field: x-codeSamples
+      function: length
+      functionOptions:
+        min: 3
+  property-names-snake-case:
+    description: Field names are snake_case (§8.1)
+    given: $..properties
+    severity: error
+    then:
+      field: "@key"
+      function: pattern
+      functionOptions:
+        match: "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+  parameter-names-snake-case:
+    description: Parameter names are snake_case (§8.1)
+    given: $.paths[*][get,put,post,patch,delete].parameters[*].name
+    severity: error
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"

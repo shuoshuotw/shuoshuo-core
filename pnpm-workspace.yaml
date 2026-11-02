@@ -1,0 +1,6 @@
+saveExact: true
+# 7 days, in minutes (SPEC §5.1)
+minimumReleaseAge: 10080
+allowBuilds:
+  # npm install telemetry; not needed
+  "@scarf/scarf": false

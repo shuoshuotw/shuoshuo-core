@@ -1,0 +1,294 @@
+# Error catalog (SPEC §8). Every code a client can receive, and the only source of its message.
+# `variants` holds wording that differs by endpoint; the code and status never differ.
+CREDENTIAL_IN_QUERY:
+  status: 400
+  message: 網址中傳遞憑證不合法，改用 Authorization 標頭
+  message_en: Sending credentials in the URL is illegal; use the Authorization header
+  condition: 查詢字串含憑證參數
+TOKEN_INVALID:
+  status: 401
+  message: 憑證無效
+  message_en: Invalid access token
+  condition: JWT 簽章、發行者或對象不符；帳號已刪除（§11.5）
+TOKEN_EXPIRED:
+  status: 401
+  message: 登入逾時
+  message_en: Access token expired
+  condition: JWT 過期
+API_KEY_INVALID:
+  status: 401
+  message: 此 API Key 無效
+  message_en: Invalid API key
+  condition: 查無此金鑰或格式錯誤；重新產生後的舊金鑰
+API_KEY_REVOKED:
+  status: 401
+  message: 此 API Key 已撤銷
+  message_en: This API key has been revoked
+  condition: 金鑰已刪除或因封號撤銷
+INTERNAL_AUTH_INVALID:
+  status: 401
+  message: 內部驗證失敗
+  message_en: Internal authentication failed
+  condition: 內部 HMAC 錯誤或逾時
+RATE_LIMITED:
+  status: 429
+  message: 速率限制，請稍後再試
+  message_en: Too many requests; retry later
+  condition: 超過 §10.4 的額度；details 含 scope、limit、window_seconds、retry_after_seconds
+INTERNAL_ERROR:
+  status: 500
+  message: 伺服器錯誤
+  message_en: Internal server error
+  condition: 未預期錯誤
+SERVICE_UNAVAILABLE:
+  status: 503
+  message: 服務暫不可用
+  message_en: Service unavailable
+  condition: 依賴服務逾時；就緒檢查的 details.checks 列出失敗項
+VALIDATION_FAILED:
+  status: 400
+  message: 請求參數不合規
+  message_en: Request parameters are invalid
+  condition: 型別、長度或格式不符；details.fields 列出欄位
+INVALID_JSON:
+  status: 400
+  message: 請求內容非合法 JSON
+  message_en: Request body is not valid JSON
+  condition: body 解析失敗
+INVALID_CURSOR:
+  status: 400
+  message: 分頁游標無效
+  message_en: Invalid pagination cursor
+  condition: cursor 無法解析
+PAYLOAD_TOO_LARGE:
+  status: 413
+  message: 請求內容過大
+  message_en: Request body is too large
+  condition: 超過 16 KB
+UNSUPPORTED_MEDIA_TYPE:
+  status: 415
+  message: 僅接受 application/json
+  message_en: Only application/json is accepted
+  condition: Content-Type 不符
+AUTHENTICATION_REQUIRED:
+  status: 401
+  message: 尚未登入
+  message_en: Authentication required
+  condition: 匿名呼叫
+INSUFFICIENT_SCOPE:
+  status: 403
+  message: 權限不足
+  message_en: Permission denied
+  condition: Key 未含所需 scope；details.required_scope
+API_KEY_NOT_ALLOWED:
+  status: 403
+  message: API Key 不能用於此操作
+  message_en: This operation does not accept API keys
+  condition: 僅限 JWT 的端點
+ACCOUNT_BANNED:
+  status: 403
+  message: 帳號已停權
+  message_en: This account has been banned
+  condition: account_standing 為封號
+FORBIDDEN_ROLE:
+  status: 403
+  message: 權限不足
+  message_en: Permission denied
+  condition: 角色不足
+ROUTE_NOT_FOUND:
+  status: 404
+  message: 找不到此 API 路徑
+  message_en: API route not found
+  condition: 路徑不存在
+METHOD_NOT_ALLOWED:
+  status: 405
+  message: 不支援此 HTTP 方法
+  message_en: HTTP method not allowed
+  condition: 方法不符
+QUOTE_NOT_FOUND:
+  status: 404
+  message: 找不到這則說說
+  message_en: Quote not found
+  condition: 不存在、已被提交者刪除，或 ID 不是 UUID
+QUOTE_REMOVED:
+  status: 410
+  message: 這則說說已移除
+  message_en: This quote has been removed
+  condition: 狀態為 removed；details.reason 為 report_reason，不含具體說明
+COMMENT_NOT_FOUND:
+  status: 404
+  message: 找不到這則留言
+  message_en: Comment not found
+  condition: 不存在或已刪除
+CATEGORY_FILTER_CONFLICT:
+  status: 400
+  message: categories 與 exclude_categories 不可併用
+  message_en: categories and exclude_categories cannot be combined
+  condition: 兩者併用
+INVALID_LENGTH_RANGE:
+  status: 400
+  message: max_length 須大於或等於 min_length
+  message_en: max_length must be at least min_length
+  condition: 範圍顛倒
+NO_QUOTE_MATCHED:
+  status: 404
+  message: 沒有符合條件的說說
+  message_en: No quote matches these filters
+  condition: 篩選後為空
+SUBMISSION_SUSPENDED:
+  status: 403
+  message: 提交權限已暫停
+  message_en: Submission privileges are suspended
+  condition: 提交權限封禁中；details.until
+QUOTE_DUPLICATE:
+  status: 409
+  message: 存在相同的說說
+  message_en: This quote already exists
+  condition: 雜湊已存在且狀態非 deleted；details.existing_id（若該說說已被移除則為 null）
+QUOTE_NOT_TRADITIONAL:
+  status: 422
+  message: 僅接受繁體中文
+  message_en: Traditional Chinese only
+  condition: 含簡體專用字；details.characters
+QUOTE_NO_HAN:
+  status: 422
+  message: 說說中需包含中文
+  message_en: The quote must contain Chinese characters
+  condition: 無漢字
+NOT_RESOURCE_OWNER:
+  status: 403
+  message: 只能變更自己的說說
+  message_en: You can only change your own content
+  condition: 非提交者、非留言作者；置頂時為非該則說說的提交者，含 admin
+  variants:
+    comment:
+      message: 只能變更自己的留言
+      message_en: You can only change your own content
+    pin:
+      message: 只有說說提交者可置頂
+      message_en: Only the quote submitter can pin comments
+QUOTE_HAS_OPEN_CASE:
+  status: 409
+  message: 審核中的說說無法變更
+  message_en: Quotes under review cannot be changed
+  condition: 存在開放案件；防止以自刪或編輯逃避違規
+QUOTE_EDIT_WINDOW_EXPIRED:
+  status: 409
+  message: 超過編輯時限
+  message_en: Edit window has expired
+  condition: 發布已超過 24 小時
+QUOTE_EDIT_TOO_LARGE:
+  status: 422
+  message: 修改幅度過大
+  message_en: Edit changes too much
+  condition: 與發布時的內容相比變更 ≥ 50%；details.change_ratio、details.limit
+COMMENTING_SUSPENDED:
+  status: 403
+  message: 留言權限已暫停
+  message_en: Commenting privileges are suspended
+  condition: 封禁中（D-12）；details.until
+COMMENT_HAS_OPEN_CASE:
+  status: 409
+  message: 審核中的留言無法變更
+  message_en: Comments under review cannot be changed
+  condition: 存在開放案件
+COMMENT_EDIT_WINDOW_EXPIRED:
+  status: 409
+  message: 超過編輯時限
+  message_en: Edit window has expired
+  condition: 發布已超過 20 分鐘
+REPORT_DUPLICATE:
+  status: 409
+  message: 已檢舉過
+  message_en: Already reported
+  condition: 同一使用者同一目標
+CANNOT_REPORT_OWN:
+  status: 422
+  message: 不可檢舉自己的內容
+  message_en: You cannot report your own content
+  condition: 目標為自己提交
+USERNAME_TAKEN:
+  status: 409
+  message: 此名稱已被使用
+  message_en: This username is already taken
+  condition: 比對不分大小寫，僅比對未刪除的帳號
+APPEAL_TARGET_NOT_FOUND:
+  status: 404
+  message: 找不到此處分或違規紀錄
+  message_en: Sanction or violation not found
+  condition: 不存在、非本人，或該違規已有處分（應申訴該處分）
+APPEAL_ALREADY_EXISTS:
+  status: 409
+  message: 此項目已提出過申訴
+  message_en: This item has already been appealed
+  condition: 同一項目每人一次
+CONFIRMATION_MISMATCH:
+  status: 422
+  message: 名稱不符
+  message_en: The confirmation text does not match
+  condition: 確認文字不符
+API_KEY_LIMIT_REACHED:
+  status: 409
+  message: 達 API Key 持有上限
+  message_en: API key limit reached
+  condition: 已有 10 組有效金鑰
+REAUTH_REQUIRED:
+  status: 403
+  message: 重新驗證身分後再試
+  message_en: Please re-authenticate and try again
+  condition: 最近驗證超過 10 分鐘
+API_KEY_NOT_FOUND:
+  status: 404
+  message: 找不到此 API Key
+  message_en: API key not found
+  condition: 不存在、已刪除或不屬於呼叫者
+CASE_NOT_FOUND:
+  status: 404
+  message: 找不到此案件
+  message_en: Case not found
+  condition: 不存在
+CASE_ALREADY_RESOLVED:
+  status: 409
+  message: 此案件已處理
+  message_en: This case has already been resolved
+  condition: 重複處理或併發
+APPEAL_NOT_FOUND:
+  status: 404
+  message: 找不到此申訴
+  message_en: Appeal not found
+  condition: 不存在
+APPEAL_ALREADY_RESOLVED:
+  status: 409
+  message: 此申訴已處理
+  message_en: This appeal has already been resolved
+  condition: 重複處理
+USER_NOT_FOUND:
+  status: 404
+  message: 找不到此使用者
+  message_en: User not found
+  condition: 不存在或帳號已刪除
+ALREADY_BANNED:
+  status: 409
+  message: 此帳號已停權
+  message_en: This account is already banned
+  condition: 重複封號
+SANCTION_NOT_FOUND:
+  status: 404
+  message: 找不到此處分
+  message_en: Sanction not found
+  condition: 不存在
+SANCTION_ALREADY_LIFTED:
+  status: 409
+  message: 此處分已解除或已到期
+  message_en: This sanction was already lifted or has expired
+  condition: 已解除或已過期
+USER_LIKES_PRIVATE:
+  status: 403
+  message: 此按讚清單為私人
+  message_en: This user's likes are private
+  condition: likes_public 為 false 且非本人
+USER_FAVORITES_PRIVATE:
+  status: 403
+  message: 此收藏清單為私人
+  message_en: This user's favorites are private
+  condition: favorites_public 為 false 且非本人
