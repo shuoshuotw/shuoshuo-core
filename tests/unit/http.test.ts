@@ -51,7 +51,13 @@ describe("pagination", () => {
     expect(decodeCursor(undefined)).toBeNull();
   });
 
-  it.each(["garbage", Buffer.from("{}").toString("base64url"), Buffer.from('{"c":"x","i":"no"}').toString("base64url")])(
+  it.each([
+    "garbage",
+    Buffer.from("{}").toString("base64url"),
+    Buffer.from('{"c":"x","i":"no"}').toString("base64url"),
+    encodeCursor({ c: "2026-11-01T09:30:00Z,status.eq.deleted", i: id }),
+    encodeCursor({ c: "2026-13-45T09:30:00Z", i: id }),
+  ])(
     "rejects %s with INVALID_CURSOR",
     (cursor) => {
       expect(() => decodeCursor(cursor)).toThrowError(expect.objectContaining({ code: "INVALID_CURSOR" }));
@@ -59,16 +65,17 @@ describe("pagination", () => {
   );
 
   it("reports has_more only with an extra row", () => {
-    const rows = [1, 2, 3].map((n) => ({ created_at: `t${n}`, id }));
+    const rows = [1, 2, 3].map((n) => ({ created_at: `2026-11-01T09:30:0${n}Z`, id }));
     const page = pageOf(rows, 2, (r) => ({ c: r.created_at, i: r.id }));
     expect(page.items).toHaveLength(2);
     expect(page.pagination.has_more).toBe(true);
-    expect(decodeCursor(page.pagination.next_cursor as string)).toEqual({ c: "t2", i: id });
+    expect(decodeCursor(page.pagination.next_cursor as string)).toEqual({ c: "2026-11-01T09:30:02Z", i: id });
     expect(pageOf(rows, 3, (r) => ({ c: r.created_at, i: r.id })).pagination).toEqual({ limit: 3, next_cursor: null, has_more: false });
   });
 
   it("builds a keyset filter", () => {
     expect(olderThan({ c: "T", i: id })).toBe(`created_at.lt.T,and(created_at.eq.T,id.lt.${id})`);
+    expect(olderThan({ c: "T", i: id }, "created_at", "quote_id")).toBe(`created_at.lt.T,and(created_at.eq.T,quote_id.lt.${id})`);
   });
 
   it("formats time as §8.1 requires", () => {

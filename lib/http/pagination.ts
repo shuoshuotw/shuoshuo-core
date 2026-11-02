@@ -8,7 +8,13 @@ export const paginationQuery = z.object({
   cursor: z.string().optional(),
 });
 
-const keyset = z.object({ c: z.string().min(1), i: z.uuid() });
+// c is spliced into a PostgREST `or` filter, so a loose string would let a client add conditions to it
+const TIMESTAMP = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/;
+
+const keyset = z.object({
+  c: z.string().regex(TIMESTAMP).refine((value) => Number.isFinite(Date.parse(value))),
+  i: z.uuid(),
+});
 
 export type Keyset = z.infer<typeof keyset>;
 
@@ -27,8 +33,8 @@ export function decodeCursor(cursor: string | undefined): Keyset | null {
 
 // PostgREST filter for "older than the cursor". c must be the raw column value: the API's ISO form
 // keeps milliseconds only, and rows inside the same millisecond would be skipped or repeated.
-export function olderThan(after: Keyset, column = "created_at"): string {
-  return `${column}.lt.${after.c},and(${column}.eq.${after.c},id.lt.${after.i})`;
+export function olderThan(after: Keyset, column = "created_at", idColumn = "id"): string {
+  return `${column}.lt.${after.c},and(${column}.eq.${after.c},${idColumn}.lt.${after.i})`;
 }
 
 // Query limit + 1 rows, then pass them here
