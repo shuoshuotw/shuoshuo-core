@@ -8,7 +8,6 @@ afterAll(cleanupFixtures);
 
 const standing = (userId: string) => checked(admin.from("account_standing").select("status, strike_count, suspended_until").eq("user_id", userId).single()) as Promise<{ status: string; strike_count: number; suspended_until: string | null }>;
 const quoteStatus = async (id: string) => ((await checked(admin.from("quotes").select("status").eq("id", id).single())) as { status: string }).status;
-const blockCount = async () => (await admin.schema("private").from("identity_blocks").select("email_hmac", { count: "exact", head: true })).count ?? 0;
 const auditActions = async (targetId: string) => ((await checked(admin.from("audit_logs").select("action").eq("target_id", targetId))) as { action: string }[]).map(({ action }) => action);
 
 // TEST_PLAN §7, one account's whole way down and back, against the real Core and database
@@ -17,7 +16,6 @@ describe("GOV-E2E-01: report, review, suspension, automatic ban, key revocation,
     const moderator = await newAdmin();
     const bob = await newUser();
     const [carol, dave, erin] = await Promise.all([agedUser(), agedUser(), agedUser()]);
-    const blocksBefore = await blockCount();
 
     // 1: three keys and four published quotes, drawable at random
     const keys: string[] = [];
@@ -94,7 +92,7 @@ describe("GOV-E2E-01: report, review, suspension, automatic ban, key revocation,
     expect(fourth.status, fourth.raw).toBe(200);
     expect((fourth.data as unknown as { effects: { api_keys_revoked: number; sanction: { kind: string } } }).effects).toMatchObject({ api_keys_revoked: 3, sanction: { kind: "account_ban" } });
     expect(await standing(bob.id)).toMatchObject({ status: "banned", strike_count: 4 });
-    expect(await blockCount()).toBeGreaterThan(blocksBefore);
+    // identity_blocks holds only HMACs and other test files run alongside this one: supabase/tests/04_governance.sql asserts them exactly
 
     // 13: the key is dead within 15 seconds (§7.5)
     await expect.poll(async () => (await call("/v1/quotes?limit=1", { token: keys[0]! })).error?.code, { timeout: 20_000, interval: 1000 }).toBe("API_KEY_REVOKED");
@@ -114,14 +112,13 @@ describe("GOV-E2E-01: report, review, suspension, automatic ban, key revocation,
     expect(appealed.status, appealed.raw).toBe(201);
     expectError(await call("/v1/me/appeals", { method: "POST", token: bob.token, body: { target_type: "sanction", target_id: ban.id, statement: STATEMENT } }), 409, "APPEAL_ALREADY_EXISTS");
 
-    // 17: accepted: overturned, three strikes, unbanned, the quote back, the block gone
+    // 17: accepted: overturned, three strikes, unbanned, the quote back
     const accepted = await call(`/v1/admin/appeals/${(appealed.data as unknown as { id: string }).id}/resolve`, { method: "POST", token: moderator.token, body: { decision: "accept", note: "確認判斷有誤" } });
     expect(accepted.status, accepted.raw).toBe(200);
     const restored = await standing(bob.id);
     expect(restored.strike_count).toBe(3);
     expect(restored.status).toBe("active");
     expect(await quoteStatus(q4)).toBe("published");
-    expect(await blockCount()).toBe(blocksBefore);
 
     // 18: the old keys stay dead (D-17)
     expect((await call("/v1/quotes?limit=1", { token: keys[0]! })).status).toBe(401);
