@@ -297,14 +297,14 @@ isOneToOne: false
                   ]
                 },"moderation_cases": {
                   Row: {
-                    "created_at": string,"effective_reporter_count": number,"final_reason": Database["public"]['Enums']["report_reason"] | null,"id": string,"resolution": Database["public"]['Enums']["case_resolution"] | null,"resolved_at": string | null,"resolved_by": string | null,"reviewer_note": string | null,"status": Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
+                    "created_at": string,"effective_reporter_count": number,"final_reason": Database["public"]['Enums']["report_reason"] | null,"id": string,"resolution": Database["public"]['Enums']["case_resolution"] | null,"resolved_at": string | null,"resolved_by": string | null,"review_expired_at": string | null,"reviewer_note": string | null,"status": Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
+                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"review_expired_at"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
                   }
                   Update: {
-                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id"?: string,"target_type"?: Database["public"]['Enums']["report_target"]
+                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"review_expired_at"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id"?: string,"target_type"?: Database["public"]['Enums']["report_target"]
                   }
                   Relationships: [
                     

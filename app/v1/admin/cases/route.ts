@@ -13,8 +13,17 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     const open = query.status === "open";
     let select = db().from("moderation_cases").select(CASE_SELECT).eq("status", query.status);
     if (query.target_type) select = select.eq("target_type", query.target_type);
+    // §9.2: expired reviews lead the first page, outside the cursor, like a pinned comment. They are rare: the 7-day SLA has to be missed.
+    let expired: CaseRow[] = [];
     if (open) {
-      select = select.order("effective_reporter_count", { ascending: false }).order("created_at").order("id");
+      if (!after) {
+        let front = db().from("moderation_cases").select(CASE_SELECT).eq("status", "open").not("review_expired_at", "is", null);
+        if (query.target_type) front = front.eq("target_type", query.target_type);
+        const result = await front.order("review_expired_at").order("id");
+        if (result.error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: result.error });
+        expired = result.data as unknown as CaseRow[];
+      }
+      select = select.is("review_expired_at", null).order("effective_reporter_count", { ascending: false }).order("created_at").order("id");
       if (after) {
         if (after.n === undefined) throw new ApiError("INVALID_CURSOR");
         const count = `effective_reporter_count.eq.${after.n}`;
@@ -27,7 +36,8 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     const { data, error } = await select.limit(query.limit + 1);
     if (error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: error });
     const page = pageOf(data as unknown as CaseRow[], query.limit, (row) => ({ c: row.created_at, i: row.id, n: row.effective_reporter_count }));
-    const content = await previews(page.items);
-    return jsonList(page.items.map((row) => toCaseSummary(row, content.get(row.target_id) ?? null)), page.pagination, requestId);
+    const rows = [...expired, ...page.items];
+    const content = await previews(rows);
+    return jsonList(rows.map((row) => toCaseSummary(row, content.get(row.target_id) ?? null)), page.pagination, requestId);
   }),
 });
