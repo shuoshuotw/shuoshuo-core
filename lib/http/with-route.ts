@@ -192,6 +192,8 @@ function logRequest(entry: { request: Request; requestId: string; status: number
   }));
 }
 
+const JSON_TYPE = "application/json; charset=utf-8";
+
 export function errorResponse(error: unknown, request: Request, requestId: string, cache: keyof typeof CACHE_CONTROL = "C-NONE") {
   const apiError = error instanceof ApiError ? error : new ApiError("INTERNAL_ERROR", { cause: error });
   if (apiError.status >= 500) {
@@ -203,6 +205,7 @@ export function errorResponse(error: unknown, request: Request, requestId: strin
     status: apiError.status,
     headers: {
       ...corsHeaders(request),
+      "Content-Type": JSON_TYPE,
       "X-Request-Id": requestId,
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": cacheable ? CACHE_CONTROL[cache] : "no-store",
@@ -277,7 +280,7 @@ export function route(handlers: Partial<Record<Method, NextHandler>>): Record<Me
 }
 
 export function json(data: unknown, requestId: string, init: { status?: number; headers?: Record<string, string> } = {}) {
-  return Response.json({ data, meta: { request_id: requestId } }, init);
+  return Response.json({ data, meta: { request_id: requestId } }, { ...init, headers: { "Content-Type": JSON_TYPE, ...init.headers } });
 }
 
 export function jsonList(
@@ -285,7 +288,7 @@ export function jsonList(
   pagination: { limit: number; next_cursor: string | null; has_more: boolean },
   requestId: string,
 ) {
-  return Response.json({ data: items, meta: { request_id: requestId, pagination } });
+  return Response.json({ data: items, meta: { request_id: requestId, pagination } }, { headers: { "Content-Type": JSON_TYPE } });
 }
 
 export function text(content: string, headers: Record<string, string> = {}) {

@@ -167,6 +167,13 @@ describe("withRoute", () => {
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    expect(response.headers.get("content-type")).toBe("application/json; charset=utf-8");
+  });
+
+  it("declares the charset on error responses (§8.1)", async () => {
+    const response = await ok(request("/v1/x?api_key=secret"), context());
+    expect(response.status).toBe(400);
+    expect(response.headers.get("content-type")).toBe("application/json; charset=utf-8");
   });
 
   it.each(["api_key", "apikey", "token", "access_token"])("rejects %s in the query string", async (name) => {
