@@ -15,7 +15,10 @@
     "lint:openapi": "spectral lint openapi/openapi.yaml --ruleset .spectral.yaml --fail-severity warn && node scripts/check-contract.mjs",
     "gen:types": "pnpm dlx --package=openapi-typescript@7.13.0 --package=typescript@5.9.3 openapi-typescript openapi/openapi.yaml -o openapi/types.ts",
     "gen:db": "supabase gen types typescript --local --schema public --schema private > lib/database.types.ts",
-    "test:db": "supabase test db"
+    "test:db": "supabase test db",
+    "gen:errors": "node scripts/generate-error-catalog.mjs",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0",
@@ -32,6 +35,7 @@
     "@types/react": "19.3.0",
     "supabase": "2.122.0",
     "typescript": "7.0.2",
+    "vitest": "5.0.5",
     "yaml": "2.9.1"
   }
 }

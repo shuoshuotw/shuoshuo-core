@@ -1,0 +1,297 @@
+{
+  "CREDENTIAL_IN_QUERY": {
+    "status": 400,
+    "message": "網址中傳遞憑證不合法，改用 Authorization 標頭",
+    "message_en": "Sending credentials in the URL is illegal; use the Authorization header"
+  },
+  "TOKEN_INVALID": {
+    "status": 401,
+    "message": "憑證無效",
+    "message_en": "Invalid access token"
+  },
+  "TOKEN_EXPIRED": {
+    "status": 401,
+    "message": "登入逾時",
+    "message_en": "Access token expired"
+  },
+  "API_KEY_INVALID": {
+    "status": 401,
+    "message": "此 API Key 無效",
+    "message_en": "Invalid API key"
+  },
+  "API_KEY_REVOKED": {
+    "status": 401,
+    "message": "此 API Key 已撤銷",
+    "message_en": "This API key has been revoked"
+  },
+  "INTERNAL_AUTH_INVALID": {
+    "status": 401,
+    "message": "內部驗證失敗",
+    "message_en": "Internal authentication failed"
+  },
+  "RATE_LIMITED": {
+    "status": 429,
+    "message": "速率限制，請稍後再試",
+    "message_en": "Too many requests; retry later"
+  },
+  "INTERNAL_ERROR": {
+    "status": 500,
+    "message": "伺服器錯誤",
+    "message_en": "Internal server error"
+  },
+  "SERVICE_UNAVAILABLE": {
+    "status": 503,
+    "message": "服務暫不可用",
+    "message_en": "Service unavailable"
+  },
+  "VALIDATION_FAILED": {
+    "status": 400,
+    "message": "請求參數不合規",
+    "message_en": "Request parameters are invalid"
+  },
+  "INVALID_JSON": {
+    "status": 400,
+    "message": "請求內容非合法 JSON",
+    "message_en": "Request body is not valid JSON"
+  },
+  "INVALID_CURSOR": {
+    "status": 400,
+    "message": "分頁游標無效",
+    "message_en": "Invalid pagination cursor"
+  },
+  "PAYLOAD_TOO_LARGE": {
+    "status": 413,
+    "message": "請求內容過大",
+    "message_en": "Request body is too large"
+  },
+  "UNSUPPORTED_MEDIA_TYPE": {
+    "status": 415,
+    "message": "僅接受 application/json",
+    "message_en": "Only application/json is accepted"
+  },
+  "AUTHENTICATION_REQUIRED": {
+    "status": 401,
+    "message": "尚未登入",
+    "message_en": "Authentication required"
+  },
+  "INSUFFICIENT_SCOPE": {
+    "status": 403,
+    "message": "權限不足",
+    "message_en": "Permission denied"
+  },
+  "API_KEY_NOT_ALLOWED": {
+    "status": 403,
+    "message": "API Key 不能用於此操作",
+    "message_en": "This operation does not accept API keys"
+  },
+  "ACCOUNT_BANNED": {
+    "status": 403,
+    "message": "帳號已停權",
+    "message_en": "This account has been banned"
+  },
+  "FORBIDDEN_ROLE": {
+    "status": 403,
+    "message": "權限不足",
+    "message_en": "Permission denied"
+  },
+  "ROUTE_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此 API 路徑",
+    "message_en": "API route not found"
+  },
+  "METHOD_NOT_ALLOWED": {
+    "status": 405,
+    "message": "不支援此 HTTP 方法",
+    "message_en": "HTTP method not allowed"
+  },
+  "QUOTE_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到這則說說",
+    "message_en": "Quote not found"
+  },
+  "QUOTE_REMOVED": {
+    "status": 410,
+    "message": "這則說說已移除",
+    "message_en": "This quote has been removed"
+  },
+  "COMMENT_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到這則留言",
+    "message_en": "Comment not found"
+  },
+  "CATEGORY_FILTER_CONFLICT": {
+    "status": 400,
+    "message": "categories 與 exclude_categories 不可併用",
+    "message_en": "categories and exclude_categories cannot be combined"
+  },
+  "INVALID_LENGTH_RANGE": {
+    "status": 400,
+    "message": "max_length 須大於或等於 min_length",
+    "message_en": "max_length must be at least min_length"
+  },
+  "NO_QUOTE_MATCHED": {
+    "status": 404,
+    "message": "沒有符合條件的說說",
+    "message_en": "No quote matches these filters"
+  },
+  "SUBMISSION_SUSPENDED": {
+    "status": 403,
+    "message": "提交權限已暫停",
+    "message_en": "Submission privileges are suspended"
+  },
+  "QUOTE_DUPLICATE": {
+    "status": 409,
+    "message": "存在相同的說說",
+    "message_en": "This quote already exists"
+  },
+  "QUOTE_NOT_TRADITIONAL": {
+    "status": 422,
+    "message": "僅接受繁體中文",
+    "message_en": "Traditional Chinese only"
+  },
+  "QUOTE_NO_HAN": {
+    "status": 422,
+    "message": "說說中需包含中文",
+    "message_en": "The quote must contain Chinese characters"
+  },
+  "NOT_RESOURCE_OWNER": {
+    "status": 403,
+    "message": "只能變更自己的說說",
+    "message_en": "You can only change your own content",
+    "variants": {
+      "comment": {
+        "message": "只能變更自己的留言",
+        "message_en": "You can only change your own content"
+      },
+      "pin": {
+        "message": "只有說說提交者可置頂",
+        "message_en": "Only the quote submitter can pin comments"
+      }
+    }
+  },
+  "QUOTE_HAS_OPEN_CASE": {
+    "status": 409,
+    "message": "審核中的說說無法變更",
+    "message_en": "Quotes under review cannot be changed"
+  },
+  "QUOTE_EDIT_WINDOW_EXPIRED": {
+    "status": 409,
+    "message": "超過編輯時限",
+    "message_en": "Edit window has expired"
+  },
+  "QUOTE_EDIT_TOO_LARGE": {
+    "status": 422,
+    "message": "修改幅度過大",
+    "message_en": "Edit changes too much"
+  },
+  "COMMENTING_SUSPENDED": {
+    "status": 403,
+    "message": "留言權限已暫停",
+    "message_en": "Commenting privileges are suspended"
+  },
+  "COMMENT_HAS_OPEN_CASE": {
+    "status": 409,
+    "message": "審核中的留言無法變更",
+    "message_en": "Comments under review cannot be changed"
+  },
+  "COMMENT_EDIT_WINDOW_EXPIRED": {
+    "status": 409,
+    "message": "超過編輯時限",
+    "message_en": "Edit window has expired"
+  },
+  "REPORT_DUPLICATE": {
+    "status": 409,
+    "message": "已檢舉過",
+    "message_en": "Already reported"
+  },
+  "CANNOT_REPORT_OWN": {
+    "status": 422,
+    "message": "不可檢舉自己的內容",
+    "message_en": "You cannot report your own content"
+  },
+  "USERNAME_TAKEN": {
+    "status": 409,
+    "message": "此名稱已被使用",
+    "message_en": "This username is already taken"
+  },
+  "APPEAL_TARGET_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此處分或違規紀錄",
+    "message_en": "Sanction or violation not found"
+  },
+  "APPEAL_ALREADY_EXISTS": {
+    "status": 409,
+    "message": "此項目已提出過申訴",
+    "message_en": "This item has already been appealed"
+  },
+  "CONFIRMATION_MISMATCH": {
+    "status": 422,
+    "message": "名稱不符",
+    "message_en": "The confirmation text does not match"
+  },
+  "API_KEY_LIMIT_REACHED": {
+    "status": 409,
+    "message": "達 API Key 持有上限",
+    "message_en": "API key limit reached"
+  },
+  "REAUTH_REQUIRED": {
+    "status": 403,
+    "message": "重新驗證身分後再試",
+    "message_en": "Please re-authenticate and try again"
+  },
+  "API_KEY_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此 API Key",
+    "message_en": "API key not found"
+  },
+  "CASE_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此案件",
+    "message_en": "Case not found"
+  },
+  "CASE_ALREADY_RESOLVED": {
+    "status": 409,
+    "message": "此案件已處理",
+    "message_en": "This case has already been resolved"
+  },
+  "APPEAL_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此申訴",
+    "message_en": "Appeal not found"
+  },
+  "APPEAL_ALREADY_RESOLVED": {
+    "status": 409,
+    "message": "此申訴已處理",
+    "message_en": "This appeal has already been resolved"
+  },
+  "USER_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此使用者",
+    "message_en": "User not found"
+  },
+  "ALREADY_BANNED": {
+    "status": 409,
+    "message": "此帳號已停權",
+    "message_en": "This account is already banned"
+  },
+  "SANCTION_NOT_FOUND": {
+    "status": 404,
+    "message": "找不到此處分",
+    "message_en": "Sanction not found"
+  },
+  "SANCTION_ALREADY_LIFTED": {
+    "status": 409,
+    "message": "此處分已解除或已到期",
+    "message_en": "This sanction was already lifted or has expired"
+  },
+  "USER_LIKES_PRIVATE": {
+    "status": 403,
+    "message": "此按讚清單為私人",
+    "message_en": "This user's likes are private"
+  },
+  "USER_FAVORITES_PRIVATE": {
+    "status": 403,
+    "message": "此收藏清單為私人",
+    "message_en": "This user's favorites are private"
+  }
+}

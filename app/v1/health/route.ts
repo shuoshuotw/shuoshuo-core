@@ -1,7 +1,9 @@
+import { json, route, withRoute } from "@/lib/http/with-route";
+
 export const dynamic = "force-dynamic";
 
-const headers = { "Access-Control-Allow-Origin": "*", "Cache-Control": "public, s-maxage=5" };
-
-export function GET() {
-  return Response.json({ status: "ok" }, { headers });
-}
+export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
+  GET: withRoute({ auth: "public", rate: null, cache: "C-5" }, ({ requestId }) =>
+    json({ status: "ok", version: "1.0.0" }, requestId),
+  ),
+});
