@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { checkContract } from "./contract-check";
 
 // Needs `supabase start` and a running Core on port 3001 (`pnpm build && pnpm start`). The publishable key is the CLI's local default; the secret key comes from .env.local.
 const SUPABASE_URL = "http://127.0.0.1:54321";
@@ -21,10 +22,10 @@ export const SEED = {
 export type TestUser = { id: string; email: string; token: string };
 
 // The Admin API does not trigger the signup Hook (§6.7), so tests can use email users
-export async function createUser(fullName = `測試${randomUUID().slice(0, 6)}`): Promise<TestUser> {
+export async function createUser(fullName = `測試${randomUUID().slice(0, 6)}`, metadata: Record<string, unknown> = {}): Promise<TestUser> {
   const email = `${randomUUID()}@example.com`;
   const password = randomUUID();
-  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
+  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName, ...metadata } });
   if (created.error) throw created.error;
   const client = createClient(SUPABASE_URL, PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   const signedIn = await client.auth.signInWithPassword({ email, password });
@@ -46,7 +47,9 @@ export async function call(path: string, { method = "GET", token, body, ip = `10
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const raw = await response.text();
-  let json: { data?: never; meta?: never; error?: { code: string; details?: never } } = {};
+  // API-03: every response any test sees must match the contract, including the success paths a fuzzer rarely reaches
+  checkContract(method, path, response.status, response.headers.get("content-type"), raw);
+  let json:{ data?: never; meta?: never; error?: { code: string; details?: never } } = {};
   try {
     json = raw ? JSON.parse(raw) : {};
   } catch {

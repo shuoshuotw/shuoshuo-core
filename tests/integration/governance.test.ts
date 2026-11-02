@@ -4,103 +4,16 @@ import { POST as resolveAppealRoute } from "@/app/v1/admin/appeals/[id]/resolve/
 import { POST as resolveCaseRoute } from "@/app/v1/admin/cases/[id]/resolve/route";
 import { POST as reportQuote } from "@/app/v1/quotes/[id]/reports/route";
 import { generateKey, toBytea } from "@/lib/auth/api-key";
-import { contentHash } from "@/lib/quotes/normalize";
 import { draw, resetPool } from "@/lib/quotes/pool";
 import { QUOTE_SELECT, type QuoteRow, toQuote } from "@/lib/quotes/serialize";
-import { admin, call, createUser, type TestUser } from "./helpers";
+import { admin, call, type TestUser } from "./helpers";
+import { agedUser, checked, cleanupFixtures, expectError, ISO, newAdmin, newComment, newQuote, newUser, openCase, removedFromAuth, report, reportedQuote, resolve, trackCase, uphold } from "./fixtures";
 
 type Row = Record<string, never>;
 const CORE_URL = process.env.CORE_URL ?? "http://localhost:3001";
-const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const STATEMENT = "我認為這次處分判斷有誤，請協助重新審視內容。";
-const users: string[] = [];
-const removedFromAuth = new Set<string>();
-const quotes: string[] = [];
-const cases: string[] = [];
 
-async function checked<T>(query: PromiseLike<{ data: T; error: unknown }>): Promise<NonNullable<T>> {
-  const { data, error } = await query;
-  if (error) throw error;
-  return data as NonNullable<T>;
-}
-
-async function newUser() {
-  const user = await createUser();
-  users.push(user.id);
-  return user;
-}
-
-// Accounts under 7 days old do not count toward the threshold (§9.2)
-async function agedUser() {
-  const user = await newUser();
-  await checked(admin.from("profiles").update({ created_at: "2020-01-01T00:00:00Z" }).eq("id", user.id));
-  return user;
-}
-
-async function newAdmin() {
-  const user = await newUser();
-  await checked(admin.from("user_roles").insert({ user_id: user.id, role: "admin" }));
-  return user;
-}
-
-const fixture = (name: string, args: Record<string, unknown>) => checked(admin.schema("private").rpc(name, args)) as Promise<string>;
-
-async function newQuote(owner: TestUser, content = `治理測試${randomUUID()}`) {
-  const id = await fixture("create_quote", {
-    actor: owner.id, content, content_hash: toBytea(contentHash(content)), category: "original", source_from: "整合測試", commit_from: "api",
-  });
-  quotes.push(id);
-  return id;
-}
-
-const newComment = (quoteId: string, author: TestUser) => fixture("create_comment", { actor: author.id, quote_id: quoteId, content: `治理留言${randomUUID()}` });
-
-async function report(path: string, reporter: TestUser, body: object = { reason: "spam" }) {
-  const response = await call(path, { method: "POST", token: reporter.token, body });
-  expect(response.status, response.raw).toBe(201);
-  return response;
-}
-
-async function openCase(type: "quote" | "comment", id: string) {
-  const row = await checked(admin.from("moderation_cases").select("id").eq("target_type", type).eq("target_id", id).eq("status", "open").single()) as { id: string };
-  cases.push(row.id);
-  return row.id;
-}
-
-// One reported quote and its open case
-async function reportedQuote() {
-  const owner = await newUser();
-  const reporter = await newUser();
-  const quoteId = await newQuote(owner);
-  await report(`/v1/quotes/${quoteId}/reports`, reporter);
-  return { owner, reporter, quoteId, caseId: await openCase("quote", quoteId) };
-}
-
-const resolve = (caseId: string, token: string, body: object) => call(`/v1/admin/cases/${caseId}/resolve`, { method: "POST", token, body });
-const uphold = (caseId: string, token: string) => resolve(caseId, token, { resolution: "uphold", final_reason: "spam", note: "內部備註" });
-
-function expectError(response: { status: number; error?: { code: string } }, status: number, code: string) {
-  expect([response.status, response.error?.code]).toEqual([status, code]);
-}
-
-afterAll(async () => {
-  if (users.length) {
-    await checked(admin.from("appeals").delete().in("user_id", users));
-    await checked(admin.from("sanctions").delete().in("user_id", users));
-    await checked(admin.from("violations").delete().in("user_id", users));
-  }
-  if (cases.length) {
-    await checked(admin.from("reports").delete().in("case_id", cases));
-    await checked(admin.from("moderation_cases").delete().in("id", cases));
-  }
-  if (quotes.length) await checked(admin.from("quotes").delete().in("id", quotes));
-  if (users.length) {
-    await checked(admin.from("profiles").delete().in("id", users));
-    for (const id of users) {
-      if (!removedFromAuth.has(id)) await admin.auth.admin.deleteUser(id);
-    }
-  }
-});
+afterAll(cleanupFixtures);
 
 describe("GET /v1/health/ready", () => {
   it("reports the database to internal callers", async () => {
@@ -200,7 +113,7 @@ describe("case queue", () => {
     const owner = await newUser();
     const insert = async (effective: number, created_at: string, target_type = "quote") => {
       const row = await checked(admin.from("moderation_cases").insert({ target_type, target_id: randomUUID(), effective_reporter_count: effective, created_at }).select("id").single()) as { id: string };
-      cases.push(row.id);
+      trackCase(row.id);
       return row.id;
     };
     const expected = [

@@ -5756,6 +5756,13 @@ paths:
       x-rate-limit: none
       x-cache: C-5
       x-errors:
+        - CREDENTIAL_IN_QUERY
+        - TOKEN_INVALID
+        - TOKEN_EXPIRED
+        - API_KEY_INVALID
+        - API_KEY_REVOKED
+        - INTERNAL_AUTH_INVALID
+        - RATE_LIMITED
         - INTERNAL_ERROR
       x-codeSamples:
         - lang: curl
@@ -5807,6 +5814,12 @@ paths:
                         type: string
                   meta:
                     $ref: "#/components/schemas/Meta"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "429":
+          $ref: "#/components/responses/Error429"
         "500":
           $ref: "#/components/responses/Error500"
   /v1/health/ready:
@@ -5825,6 +5838,13 @@ paths:
       x-rate-limit: none
       x-cache: C-NONE
       x-errors:
+        - CREDENTIAL_IN_QUERY
+        - TOKEN_INVALID
+        - TOKEN_EXPIRED
+        - API_KEY_INVALID
+        - API_KEY_REVOKED
+        - INTERNAL_AUTH_INVALID
+        - RATE_LIMITED
         - ROUTE_NOT_FOUND
         - SERVICE_UNAVAILABLE
       x-codeSamples:
@@ -5882,8 +5902,14 @@ paths:
                               - ok
                   meta:
                     $ref: "#/components/schemas/Meta"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
         "404":
           $ref: "#/components/responses/Error404"
+        "429":
+          $ref: "#/components/responses/Error429"
         "503":
           $ref: "#/components/responses/Error503"
   /v1/users/{username}:
@@ -6966,6 +6992,7 @@ components:
             - pending
             - accepted
             - rejected
+            - null
     Violation:
       type: object
       required:
@@ -7007,6 +7034,7 @@ components:
             - pending
             - accepted
             - rejected
+            - null
         sanction:
           oneOf:
             - $ref: "#/components/schemas/Sanction"
@@ -7119,6 +7147,7 @@ components:
             - dismiss
             - uphold
             - target_deleted
+            - null
         final_reason:
           oneOf:
             - $ref: "#/components/schemas/ReportReason"

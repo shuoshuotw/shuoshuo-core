@@ -26,6 +26,17 @@ for (const [path, item] of Object.entries(openapi.paths)) {
   }
 }
 
+// A nullable enum that omits null rejects the very value its type allows
+function checkNullableEnums(node, at) {
+  if (Array.isArray(node)) return node.forEach((item, i) => checkNullableEnums(item, `${at}/${i}`));
+  if (node === null || typeof node !== "object") return;
+  if (Array.isArray(node.type) && node.type.includes("null") && node.enum && !node.enum.includes(null)) {
+    problems.push(`${at}: nullable enum does not list null`);
+  }
+  for (const [key, value] of Object.entries(node)) checkNullableEnums(value, `${at}/${key}`);
+}
+checkNullableEnums(openapi, "");
+
 // Codes that any route can produce without being declared per operation
 for (const code of ["ROUTE_NOT_FOUND", "METHOD_NOT_ALLOWED"]) used.add(code);
 

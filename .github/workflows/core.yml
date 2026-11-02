@@ -1,0 +1,57 @@
+name: Core
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 18 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint:openapi
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - run: pnpm exec supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,mailpit
+      - run: pnpm test:db
+
+      - name: Write .env.local from the local stack
+        run: |
+          secret=$(pnpm exec supabase status -o env | grep -E '^SECRET_KEY=' | cut -d= -f2- | tr -d '"')
+          sed -e "s|^SUPABASE_SECRET_KEY=.*|SUPABASE_SECRET_KEY=$secret|" \
+              -e "s|^INTERNAL_HMAC_SECRETS=.*|INTERNAL_HMAC_SECRETS=$(openssl rand -hex 32)|" \
+              -e "/^SENTRY_DSN=/d" .env.example > .env.local
+
+      - run: pnpm build
+      - name: Start Core
+        run: |
+          pnpm start > core.log 2>&1 &
+          for _ in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3001/v1/health && exit 0; sleep 1; done
+          cat core.log
+          exit 1
+      - run: pnpm test:integration
+
+      - name: Contract fuzz (API-03)
+        if: github.event_name == 'schedule'
+        run: |
+          pip install schemathesis==4.33.0
+          bash scripts/contract-fuzz.sh
+
+      - name: Core log
+        if: failure()
+        run: cat core.log

@@ -3684,6 +3684,9 @@ export interface operations {
                     };
                 };
             };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
+            429: components["responses"]["Error429"];
             500: components["responses"]["Error500"];
         };
     };
@@ -3716,7 +3719,10 @@ export interface operations {
                     };
                 };
             };
+            400: components["responses"]["Error400"];
+            401: components["responses"]["Error401"];
             404: components["responses"]["Error404"];
+            429: components["responses"]["Error429"];
             503: components["responses"]["Error503"];
         };
     };

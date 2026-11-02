@@ -5,6 +5,9 @@ select plan(44);
 
 set local role service_role;
 
+-- Bans from integration runs leave rows here, and the counts below are absolute
+delete from private.identity_blocks;
+
 create temp table ids (name text primary key, id uuid) on commit drop;
 create function pg_temp.id(key text) returns uuid language sql as $$ select id from ids where name = key $$;
 create function pg_temp.hash(value text) returns bytea language sql as $$ select extensions.digest(value, 'sha256') $$;
