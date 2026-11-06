@@ -10,7 +10,7 @@ import { admin, call, type TestUser } from "./helpers";
 import { agedUser, checked, cleanupFixtures, expectError, ISO, newAdmin, newComment, newQuote, newUser, openCase, removedFromAuth, report, reportedQuote, resolve, trackCase, uphold } from "./fixtures";
 
 type Row = Record<string, never>;
-const CORE_URL = process.env.CORE_URL ?? "http://localhost:3001";
+const CORE_URL = process.env.CORE_URL ?? "http://localhost:5001";
 const STATEMENT = "我認為這次處分判斷有誤，請協助重新審視內容。";
 
 afterAll(cleanupFixtures);

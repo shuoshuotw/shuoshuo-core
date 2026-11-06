@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { checkContract } from "./contract-check";
 
-// Needs `supabase start` and a running Core on port 3001 (`pnpm build && pnpm start`). The publishable key is the CLI's local default; the secret key comes from .env.local.
+// Needs `supabase start` and a running Core on port 5001 (`pnpm build && pnpm start`). The publishable key is the CLI's local default; the secret key comes from .env.local.
 const SUPABASE_URL = "http://127.0.0.1:54321";
 process.loadEnvFile(".env.local");
 const SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
 const PUBLISHABLE_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
-const CORE_URL = process.env.CORE_URL ?? "http://localhost:3001";
+const CORE_URL = process.env.CORE_URL ?? "http://localhost:5001";
 
 export const admin = createClient(SUPABASE_URL, SECRET_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
