@@ -8,12 +8,14 @@ import type { components } from "@/openapi/types";
 
 export const dynamic = "force-dynamic";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
   GET: withRoute(
     { auth: "user", rate: "RL-USER", cache: "C-NONE", rejectBanned: true },
     async ({ caller, requestId }) => {
       const { data, error } = await db().from("api_keys")
-        .select("id, name, key_prefix, scopes, last_used_at, regenerated_at, created_at")
+        .select("id, name, key_prefix, scopes, expires_at, last_used_at, regenerated_at, created_at")
         .eq("user_id", identified(caller).userId)
         .is("revoked_at", null)
         .order("created_at", { ascending: false })
@@ -21,6 +23,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
       if (error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: error });
       return json(data.map((row) => ({
         ...row,
+        expires_at: iso(row.expires_at),
         last_used_at: iso(row.last_used_at),
         regenerated_at: iso(row.regenerated_at),
         created_at: iso(row.created_at),
@@ -37,6 +40,8 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
         scopes: body.scopes,
         key_prefix: key.prefix,
         key_hash: toBytea(key.hash),
+        // Left out, the key has no end date, which the RPC allows only once the account has
+        ...(body.expires_in_days !== null && { expires_at: new Date(Date.now() + body.expires_in_days * DAY_MS).toISOString() }),
       }, { requestId }) as components["schemas"]["ApiKey"];
       return json({ ...data, secret: key.secret }, requestId, { status: 201 });
     },

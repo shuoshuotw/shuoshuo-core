@@ -25,6 +25,11 @@ API_KEY_REVOKED:
   message: 此 API Key 已撤銷
   message_en: This API key has been revoked
   condition: 金鑰已刪除或因封號撤銷
+API_KEY_EXPIRED:
+  status: 401
+  message: 此 API Key 已過期
+  message_en: This API key has expired
+  condition: 已過建立時選的有效期限
 INTERNAL_AUTH_INVALID:
   status: 401
   message: 內部驗證失敗
@@ -212,6 +217,11 @@ USERNAME_TAKEN:
   message: 此名稱已被使用
   message_en: This username is already taken
   condition: 比對不分大小寫，僅比對未刪除的帳號
+AVATAR_SOURCE_UNAVAILABLE:
+  status: 409
+  message: 這個登入方式沒有可用的頭貼
+  message_en: This sign-in provider has no picture to use
+  condition: 未綁定該登入方式，或它沒有給出允許的圖片網址
 APPEAL_TARGET_NOT_FOUND:
   status: 404
   message: 找不到此處分或違規紀錄
@@ -232,6 +242,11 @@ API_KEY_LIMIT_REACHED:
   message: 達 API Key 持有上限
   message_en: API key limit reached
   condition: 已有 10 組有效金鑰
+API_KEY_PERMANENT_DISABLED:
+  status: 403
+  message: 先在安全設置中允許永久 API Key
+  message_en: Allow API keys without an end date in the security settings first
+  condition: 未選有效期限，且帳號未允許永久金鑰
 REAUTH_REQUIRED:
   status: 403
   message: 重新驗證身分後再試

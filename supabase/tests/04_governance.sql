@@ -91,7 +91,7 @@ select is(
 );
 
 -- Strike 4 bans, revokes keys and blocks the email
-select lives_ok($$select private.create_api_key(pg_temp.id('alice'), '將被撤銷', 'p1', pg_temp.hash('k1'), array['quotes:read'])$$, 'key exists before the ban');
+select lives_ok($$select private.create_api_key(pg_temp.id('alice'), '將被撤銷', 'p1', pg_temp.hash('k1'), array['quotes:read'], now() + interval '30 days')$$, 'key exists before the ban');
 create temp table effects on commit drop as select pg_temp.uphold(pg_temp.id('s4')) as value;
 select is((select value->'sanction'->>'kind' from effects), 'account_ban', 'strike 4 bans');
 select is((select value->>'api_keys_revoked' from effects), '1', 'ban revokes every key');
@@ -101,7 +101,7 @@ select is(
   1, 'ban stores the email HMAC'
 );
 select throws_ok($$select private.create_comment(pg_temp.id('alice'), pg_temp.id('q1'), '封號後留言')$$, 'P0001', 'ACCOUNT_BANNED', 'banned user cannot comment');
-select throws_ok($$select private.create_api_key(pg_temp.id('alice'), '封號後', 'p2', pg_temp.hash('k2'), array['quotes:read'])$$, 'P0001', 'ACCOUNT_BANNED', 'T-08 banned user cannot create a key');
+select throws_ok($$select private.create_api_key(pg_temp.id('alice'), '封號後', 'p2', pg_temp.hash('k2'), array['quotes:read'], now() + interval '30 days')$$, 'P0001', 'ACCOUNT_BANNED', 'T-08 banned user cannot create a key');
 
 -- Banned users stay able to appeal; strikes still accumulate without another sanction
 select is((pg_temp.uphold(pg_temp.id('s5')))->'sanction', 'null'::jsonb, 'strike 5 adds no sanction');

@@ -14,7 +14,7 @@ export type PoolQuote = {
   length: number;
   category: { key: string; name: string };
   source_from: string;
-  submitter: { id: string; username: string; deleted: boolean };
+  submitter: { id: string; username: string; avatar_url: string | null; deleted: boolean; verified: boolean };
   stats: { like_count: number; favorite_count: number; comment_count: number };
   status: string;
   commit_from: string;
@@ -143,7 +143,7 @@ export function updateStats(id: string, stats: Partial<PoolQuote["stats"]>): voi
 }
 
 /** Rename or account deletion. A deleted account keeps its name and only flips `deleted` (D-22). */
-export function updateSubmitter(userId: string, change: { username?: string; deleted?: boolean }): void {
+export function updateSubmitter(userId: string, change: { username?: string; avatar_url?: string | null; deleted?: boolean }): void {
   for (const bucket of pool().buckets.values()) {
     for (const quote of bucket.quotes) {
       if (quote.submitter.id === userId) quote.submitter = { ...quote.submitter, ...change };

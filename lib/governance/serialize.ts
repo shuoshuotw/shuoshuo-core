@@ -56,7 +56,15 @@ export function toViolation(row: ViolationRow) {
   };
 }
 
-export const appealTarget = (row: { sanction_id: string | null; violation_id: string | null }) =>
+/** One's own violations also say what was reported: the case's target and, for a quote, its words (§9.6). */
+export const OWN_VIOLATION_SELECT = `${VIOLATION_SELECT}, moderation:moderation_cases(target_type, target_id), quote:quotes(content)`;
+
+export type OwnViolationRow = ViolationRow & {
+  moderation: { target_type: "quote" | "comment"; target_id: string } | null;
+  quote: { content: string } | null;
+};
+
+export const appealTarget =(row: { sanction_id: string | null; violation_id: string | null }) =>
   row.sanction_id
     ? { target_type: "sanction", target_id: row.sanction_id }
     : { target_type: "violation", target_id: row.violation_id };

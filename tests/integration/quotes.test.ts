@@ -71,7 +71,7 @@ function expectQuote(quote: Quote, expected: Partial<Quote> = {}) {
   expect(quote).toEqual({
     id: expect.stringMatching(UUID), content: expect.any(String), length: expect.any(Number),
     category: { key: expect.any(String), name: expect.any(String) }, source_from: expect.any(String),
-    submitter: { id: expect.stringMatching(UUID), username: expect.any(String), deleted: false },
+    submitter: { id: expect.stringMatching(UUID), username: expect.any(String), avatar_url: null, deleted: false, verified: false },
     stats: { like_count: expect.any(Number), favorite_count: expect.any(Number), comment_count: expect.any(Number) },
     status: "published", commit_from: "web", edited_at: null,
     created_at: expect.stringMatching(ISO), ...expected,
@@ -226,7 +226,7 @@ describe("quotes: writes, ownership and editing (ED-01/02/03/07/08/09)", () => {
     quoteIds.push(response.data.id);
     expectQuote(response.data, {
       content: content.normalize("NFC"), category: { key: "original", name: "原創" }, source_from: "測試來源",
-      submitter: { id: user.id, username: expect.any(String), deleted: false },
+      submitter: { id: user.id, username: expect.any(String), avatar_url: null, deleted: false, verified: false },
       stats: { like_count: 0, favorite_count: 0, comment_count: 0 },
     });
     expectMeta(response);
@@ -414,7 +414,10 @@ describe("quotes: writes, ownership and editing (ED-01/02/03/07/08/09)", () => {
     await admin.from("account_standing").update({ suspended_until: until }).eq("user_id", user.id).throwOnError();
     const post = () => request("/v1/quotes", { method: "POST", token: user.token, body: { content: `封禁測試${randomUUID()}`, category: "original", source_from: "來源" } });
     const patch = () => request(`/v1/quotes/${row.id}`, { method: "PATCH", token: user.token, body: { content: `${row.content}呀` } });
-    for (const response of [await post(), await patch()]) expectError(response, "SUBMISSION_SUSPENDED", { until: expect.any(String) });
+    // The account's own API Keys are held back with it
+    const key = await keyFor(user, ["quotes:read", "quotes:write"]);
+    const postWithKey = () => request("/v1/quotes", { method: "POST", token: key, body: { content: `封禁測試${randomUUID()}`, category: "original", source_from: "來源" } });
+    for (const response of [await post(), await patch(), await postWithKey()]) expectError(response, "SUBMISSION_SUSPENDED", { until: expect.any(String) });
     await admin.from("account_standing").update({ status: "banned" }).eq("user_id", user.id).throwOnError();
     for (const response of [await post(), await patch(), await request(`/v1/quotes/${row.id}`, { method: "DELETE", token: user.token })]) expectError(response, "ACCOUNT_BANNED");
     expect((await request(`/v1/quotes/${row.id}`, { token: user.token })).status).toBe(200);

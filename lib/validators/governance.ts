@@ -52,6 +52,8 @@ export const reasonBody = z.strictObject({ reason: reasonText });
 
 export const auditLogsQuery = paginationQuery.extend({
   actor_id: z.uuid().optional(),
+  // Part of the name an actor goes by now
+  actor: z.string().trim().min(1).max(30).optional(),
   target_id: z.uuid().optional(),
   action: auditAction.optional(),
   from: z.iso.datetime({ offset: true }).optional(),

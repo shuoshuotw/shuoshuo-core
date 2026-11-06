@@ -14,7 +14,7 @@ const LAST_USED_INTERVAL_MS = 5 * 60_000;
 
 export type ResolvedKey = { keyId: string; userId: string; scopes: ApiKeyScope[] };
 
-type Lookup = ResolvedKey | "invalid" | "revoked";
+type Lookup = ResolvedKey | "invalid" | "revoked" | "expired";
 
 // Rejection sampling keeps every character uniform; a plain modulo would bias the low digits
 function randomBase62(length: number): string {
@@ -70,7 +70,7 @@ function remember(hash: Buffer, value: Lookup) {
 export async function lookupKey(hash: Buffer): Promise<Lookup> {
   const { data, error } = await db()
     .from("api_keys")
-    .select("id, user_id, scopes, revoked_at")
+    .select("id, user_id, scopes, revoked_at, expires_at")
     .eq("key_hash", toBytea(hash))
     .maybeSingle();
   // A database error is not cached: it says nothing about the key (§7.5)
@@ -79,7 +79,9 @@ export async function lookupKey(hash: Buffer): Promise<Lookup> {
     ? "invalid"
     : data.revoked_at
       ? "revoked"
-      : { keyId: data.id, userId: data.user_id, scopes: data.scopes as ApiKeyScope[] };
+      : data.expires_at && Date.parse(data.expires_at) <= Date.now()
+        ? "expired"
+        : { keyId: data.id, userId: data.user_id, scopes: data.scopes as ApiKeyScope[] };
   remember(hash, value);
   return value;
 }

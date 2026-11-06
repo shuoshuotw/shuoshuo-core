@@ -3,7 +3,7 @@ import { iso } from "@/lib/http/pagination";
 import { updateStats } from "@/lib/quotes/pool";
 import { db } from "@/lib/supabase";
 
-export const COMMENT_SELECT = "id, quote_id, content, pinned_at, edited_at, created_at, user:profiles!inner(id, username, avatar_url)";
+export const COMMENT_SELECT = "id, quote_id, content, pinned_at, edited_at, created_at, user:profiles!inner(id, username, avatar_url, verified)";
 
 export type CommentRow = {
   id: string;
@@ -12,7 +12,7 @@ export type CommentRow = {
   pinned_at: string | null;
   edited_at: string | null;
   created_at: string;
-  user: { id: string; username: string; avatar_url: string | null };
+  user: { id: string; username: string; avatar_url: string | null; verified: boolean };
 };
 
 export function toComment(row: CommentRow) {

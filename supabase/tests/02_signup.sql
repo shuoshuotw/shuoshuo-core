@@ -1,7 +1,7 @@
 -- TEST_PLAN RLS-10, PV-04
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(14);
 
 create function pg_temp.signup(meta jsonb) returns uuid language sql as $$
   insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data)
@@ -28,7 +28,7 @@ select is(
 );
 select matches(
   pg_temp.name_of('{}'),
-  '^讀者[0-9a-f]{4}$', 'RLS-10 no name gets the default form'
+  '^說說使用者-[0-9A-F]{5}$', 'RLS-10 no name gets the default form'
 );
 select is(
   char_length(pg_temp.name_of(jsonb_build_object('full_name', repeat('長', 40)))),
@@ -36,11 +36,11 @@ select is(
 );
 select matches(
   pg_temp.name_of('{"full_name":"!@#"}'),
-  '^讀者[0-9a-f]{4}$', 'RLS-10 name without allowed characters gets the default form'
+  '^說說使用者-[0-9A-F]{5}$', 'RLS-10 name without allowed characters gets the default form'
 );
 select matches(
   pg_temp.name_of('{"full_name":"小明"}'),
-  '^讀者[0-9a-f]{4}$', 'RLS-10 name collision gets the default form'
+  '^說說使用者-[0-9A-F]{5}$', 'RLS-10 name collision gets the default form'
 );
 select matches(
   pg_temp.name_of('{"full_name":"ALICE"}'),
@@ -48,7 +48,21 @@ select matches(
 );
 select matches(
   pg_temp.name_of('{"full_name":"alice"}'),
-  '^讀者[0-9a-f]{4}$', 'RLS-10 collision check ignores case (D-35)'
+  '^說說使用者-[0-9A-F]{5}$', 'RLS-10 collision check ignores case (D-35)'
+);
+
+-- A deleted account's name is shown with （已刪除） after it (D-22): a new one carrying those words takes the default form
+select matches(
+  pg_temp.name_of('{"full_name":"小華（已刪除）"}'),
+  '^說說使用者-[0-9A-F]{5}$', 'a name marked （已刪除） gets the default form'
+);
+select matches(
+  pg_temp.name_of('{"full_name":"說說官方"}'),
+  '^說說使用者-[0-9A-F]{5}$', 'the site''s own name 說說官方 gets the default form'
+);
+select matches(
+  pg_temp.name_of('{"name":"已刪除的人"}'),
+  '^說說使用者-[0-9A-F]{5}$', 'a name with 已刪除 in it gets the default form'
 );
 
 -- Separate statements: one statement's snapshot cannot see rows its own trigger inserted

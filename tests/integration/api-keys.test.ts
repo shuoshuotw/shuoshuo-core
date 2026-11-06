@@ -34,12 +34,13 @@ function success<T>(response: Reply, status = 200): T {
 
 function keyFields(key: ApiKey, withSecret = false) {
   expect(Object.keys(key).sort()).toEqual([
-    "created_at", "id", "key_prefix", "last_used_at", "name", "regenerated_at", "scopes",
+    "created_at", "expires_at", "id", "key_prefix", "last_used_at", "name", "regenerated_at", "scopes",
     ...(withSecret ? ["secret"] : []),
   ].sort());
   expect(key.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   expect(key.key_prefix).toMatch(/^shuoshuo_test_[0-9A-Za-z]{8}$/);
   expect(key.created_at).toMatch(ISO);
+  if (key.expires_at !== null) expect(key.expires_at).toMatch(ISO);
   if (key.last_used_at !== null) expect(key.last_used_at).toMatch(ISO);
   if (key.regenerated_at !== null) expect(key.regenerated_at).toMatch(ISO);
 }
@@ -108,7 +109,7 @@ describe("API key management (SEC-04 through SEC-08)", () => {
     const detail = success<ApiKey>(await call(`${ROOT}/${first.id}`, { token: user.token }));
     keyFields(detail);
     expect(detail).toEqual({
-      id: first.id, name: first.name, key_prefix: first.key_prefix, scopes: ["quotes:read"],
+      id: first.id, name: first.name, key_prefix: first.key_prefix, scopes: ["quotes:read"], expires_at: first.expires_at,
       created_at: "2026-01-01T00:00:00.123Z", last_used_at: "2026-01-02T00:00:00.234Z",
       regenerated_at: "2026-01-03T00:00:00.345Z",
     });
@@ -357,5 +358,34 @@ describe("API key management (SEC-04 through SEC-08)", () => {
     const { secret: _secret, ...publicKey } = key;
     expect(success<ApiKey>(await call(`${ROOT}/${key.id}`, { token: user.token }))).toEqual(publicKey);
     expect(success<ApiKey[]>(await call(ROOT, { token: user.token }))).toEqual([publicKey]);
+  });
+
+  it("§8.8.2 keys last 90 days unless asked, and one without an end date needs the account's leave", async () => {
+    const user = await newUser();
+    const before = Date.now();
+    const days = (key: SecretKey) => (Date.parse(key.expires_at!) - before) / 86_400_000;
+    expect(days(await createKey(user))).toBeCloseTo(90, 2);
+    expect(days(await createKey(user, { name: `短${randomUUID()}`, expires_in_days: 30 }))).toBeCloseTo(30, 2);
+    failure(await call(ROOT, { method: "POST", token: user.token, body: { name: "七天", expires_in_days: 7 } }), 400, "VALIDATION_FAILED");
+    failure(await call(ROOT, { method: "POST", token: user.token, body: { name: "永久", expires_in_days: null } }), 403, "API_KEY_PERMANENT_DISABLED");
+    expect((await call("/v1/me", { method: "PATCH", token: user.token, body: { allow_permanent_api_keys: true } })).status).toBe(200);
+    const forever = await createKey(user, { name: `永久${randomUUID()}`, expires_in_days: null });
+    expect(forever.expires_at).toBeNull();
+    // Taking the leave back revokes every key that never expires, and only those
+    expect((await call("/v1/me", { method: "PATCH", token: user.token, body: { allow_permanent_api_keys: false } })).status).toBe(200);
+    const left = success<ApiKey[]>(await call(ROOT, { token: user.token }));
+    expect(left.map((key) => key.id)).not.toContain(forever.id);
+    expect(left).toHaveLength(2);
+  });
+
+  it("§8.8.2 refuses a key past its end date", { timeout: 40_000 }, async () => {
+    const user = await newUser();
+    const key = await createKey(user);
+    expect((await call("/v1/categories", { token: key.secret })).status).toBe(200);
+    const changed = await admin.from("api_keys").update({ expires_at: new Date(Date.now() - 1000).toISOString() }).eq("id", key.id);
+    if (changed.error) throw changed.error;
+    // The lookup is kept for up to 15 seconds (§7.5), as with a revocation
+    await new Promise((resolve) => setTimeout(resolve, 15_500));
+    failure(await call("/v1/categories", { token: key.secret }), 401, "API_KEY_EXPIRED");
   });
 });

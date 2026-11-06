@@ -45,9 +45,9 @@ async function fromApiKey(key: string, base: { ip: string; internal: boolean }):
     await guardCredentialLookup(base.ip);
     found = await lookupKey(hash);
   }
-  if (found === "invalid" || found === "revoked") {
+  if (typeof found === "string") {
     await recordCredentialFailure(base.ip);
-    throw new ApiError(found === "invalid" ? "API_KEY_INVALID" : "API_KEY_REVOKED");
+    throw new ApiError(found === "invalid" ? "API_KEY_INVALID" : found === "revoked" ? "API_KEY_REVOKED" : "API_KEY_EXPIRED");
   }
   touchLastUsed(found.keyId);
   return { ...base, type: "api_key", ...found };

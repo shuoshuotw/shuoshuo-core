@@ -41,7 +41,7 @@ async function newKey(user: TestUser, scopes = ["quotes:read", "me:read"]) {
 async function expectedMe(user: TestUser) {
   const profile = await checked(admin.from("profiles").select("username, created_at").eq("id", user.id).single());
   return {
-    id: user.id, username: profile.username, avatar_url: null, likes_public: true, favorites_public: true,
+    id: user.id, username: profile.username, avatar_url: null, likes_public: true, favorites_public: true, allow_permanent_api_keys: false, reduce_motion: false,
     roles: [], standing: { status: "active", suspended_until: null, strike_count: 0, strike_limit: 4, can_submit: true, can_comment: true },
     pending_notices: [], created_at: new Date(profile.created_at).toISOString(),
   };
@@ -63,7 +63,7 @@ async function newQuote(user: TestUser, status: "published" | "under_review" | "
   const row = await checked(admin.from("quotes").select("created_at").eq("id", id).single());
   return {
     id, content, length: Array.from(content).length, category: { key: "original", name: "原創" }, source_from: "卡五整合測試",
-    submitter: { id: user.id, username: profile.username, deleted: false },
+    submitter: { id: user.id, username: profile.username, avatar_url: null, deleted: false, verified: false },
     stats: { like_count: 0, favorite_count: 0, comment_count: 0 }, status, commit_from: "api", edited_at: null,
     created_at: new Date(row.created_at).toISOString(),
   };
@@ -143,6 +143,8 @@ describe("personal profile and settings", () => {
   it.each([
     {}, { unknown: true }, { username: "a" }, { username: "a".repeat(31) }, { username: "名字😀" },
     { username: "名 字" }, { username: "名字\n" }, { username: "éé" }, { username: 12 }, { likes_public: "false" }, { favorites_public: null },
+    // A deleted account's name is shown with （已刪除） after it (D-22)
+    { username: "小明已刪除" }, { username: "小明（已刪除）" }, { username: "說說官方" }, { username: "說說官方小編" },
   ])("rejects invalid PATCH body %j", async (body) => {
     const user = await newUser();
     const before = await expectedMe(user);
@@ -174,6 +176,16 @@ describe("personal profile and settings", () => {
     expectSuccess(await call("/v1/me", { method: "PATCH", token: user.token, body: { favorites_public: false } }), { ...before, favorites_public: false }, undefined, 10);
   });
 
+  it("§8.7.1 takes the picture only from the account's own sign-ins, and can clear it", async () => {
+    const user = await newUser();
+    expectError(await call("/v1/me", { method: "PATCH", token: user.token, body: { avatar_provider: "github" } }), 409, "AVATAR_SOURCE_UNAVAILABLE");
+    expectError(await call("/v1/me", { method: "PATCH", token: user.token, body: { avatar_url: "https://avatars.githubusercontent.com/u/1" } }), 400, "VALIDATION_FAILED");
+    await checked(admin.from("profiles").update({ avatar_url: "https://avatars.githubusercontent.com/u/1" }).eq("id", user.id));
+    const before = JSON.parse((await call("/v1/me", { token: user.token })).raw).data;
+    expect(before.avatar_url).toBe("https://avatars.githubusercontent.com/u/1");
+    expectSuccess(await call("/v1/me", { method: "PATCH", token: user.token, body: { avatar_provider: null } }), { ...before, avatar_url: null }, undefined, 10);
+  });
+
   it("synchronizes a successful rename into the existing quote pool", async () => {
     if (existsSync(".env.local")) process.loadEnvFile(".env.local");
     const user = await newUser();
@@ -186,7 +198,7 @@ describe("personal profile and settings", () => {
         body: JSON.stringify({ username }),
       }), { params: Promise.resolve({}) });
       expect(response.status, await response.text()).toBe(200);
-      expect(draw({ categories: ["original"] })?.submitter).toEqual({ id: user.id, username, deleted: false });
+      expect(draw({ categories: ["original"] })?.submitter).toEqual({ id: user.id, username, avatar_url: null, deleted: false, verified: false });
       expect(JSON.parse((await call("/v1/me", { token: user.token })).raw).data.username).toBe(username);
     } finally {
       resetPool();

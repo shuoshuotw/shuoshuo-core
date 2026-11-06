@@ -88,7 +88,7 @@ describe("comments", () => {
     if (profile.error) throw profile.error;
     expect(comment).toEqual({
       id: expect.any(String), quote_id: quoteId, content: raw.trim().normalize("NFC"),
-      user: { id: owner.id, username: profile.data.username, avatar_url: null },
+      user: { id: owner.id, username: profile.data.username, avatar_url: null, verified: false },
       pinned_at: null, edited_at: null, created_at: expect.any(String),
     });
     expect(comment.created_at).toBe(new Date(comment.created_at).toISOString());
@@ -221,9 +221,12 @@ describe("comments", () => {
     const until = new Date(Date.now() + 3600_000).toISOString();
     const suspended = await admin.from("account_standing").update({ suspended_until: until }).eq("user_id", user.id);
     if (suspended.error) throw suspended.error;
+    // The account's own API Keys are held back with it
+    const key = await keyFor(user, ["quotes:read", "comments:write"]);
     for (const response of [
       await patchComment(id, user),
       await call(`/v1/quotes/${quoteId}/comments`, { method: "POST", token: user.token, body: { content: "suspended" } }),
+      await call(`/v1/quotes/${quoteId}/comments`, { method: "POST", token: key, body: { content: "suspended" } }),
     ]) {
       expectError(response, 403, "COMMENTING_SUSPENDED");
       expect(response.error?.details).toEqual({ until });

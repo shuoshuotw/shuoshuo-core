@@ -10,7 +10,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     { auth: "user", rate: "RL-USER", cache: "C-NONE", rejectBanned: true, idNotFound: "API_KEY_NOT_FOUND" },
     async ({ caller, params, requestId }) => {
       const { data, error } = await db().from("api_keys")
-        .select("id, name, key_prefix, scopes, last_used_at, regenerated_at, created_at")
+        .select("id, name, key_prefix, scopes, expires_at, last_used_at, regenerated_at, created_at")
         .eq("id", params.id!)
         .eq("user_id", identified(caller).userId)
         .is("revoked_at", null)
@@ -19,6 +19,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
       if (!data) throw new ApiError("API_KEY_NOT_FOUND");
       return json({
         ...data,
+        expires_at: iso(data.expires_at),
         last_used_at: iso(data.last_used_at),
         regenerated_at: iso(data.regenerated_at),
         created_at: iso(data.created_at),

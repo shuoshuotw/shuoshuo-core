@@ -22,7 +22,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
       if (caller.type === "user") await db().auth.admin.signOut(caller.token, "global");
       const deleted = await db().auth.admin.deleteUser(userId);
       if (deleted.error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: deleted.error });
-      updateSubmitter(userId, { deleted: true });
+      updateSubmitter(userId, { deleted: true, avatar_url: null });
       return json({ status: "deleted" }, requestId, { status: 202 });
     },
   ),
