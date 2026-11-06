@@ -44,7 +44,7 @@ export type Database = {
 { Args: { "action": string,"actor_id": string,"actor_type": string,"metadata"?: Json,"target_id": string,"target_type": string }; Returns: undefined
                            },
 "create_api_key":
-{ Args: { "actor": string,"key_hash": string,"key_prefix": string,"name": string,"scopes": (string)[] }; Returns: Json
+{ Args: { "actor": string,"expires_at"?: string,"key_hash": string,"key_prefix": string,"name": string,"scopes": (string)[] }; Returns: Json
                            },
 "create_appeal":
 { Args: { "actor": string,"statement": string,"target_id": string,"target_type": string }; Returns: string
@@ -156,7 +156,7 @@ export type Database = {
 { Args: { "actor": string,"comment_id": string,"content": string }; Returns: string
                            },
 "update_profile":
-{ Args: { "actor": string,"favorites_public"?: boolean,"likes_public"?: boolean,"username"?: string }; Returns: Database["public"]['Tables']["profiles"]['Row']
+{ Args: { "actor": string,"allow_permanent_api_keys"?: boolean,"avatar_url"?: string,"favorites_public"?: boolean,"likes_public"?: boolean,"reduce_motion"?: boolean,"set_avatar"?: boolean,"username"?: string }; Returns: Database["public"]['Tables']["profiles"]['Row']
                           SetofOptions: {
         from: "*"
         to: "profiles"
@@ -197,14 +197,14 @@ isOneToOne: true
                   ]
                 },"api_keys": {
                   Row: {
-                    "created_at": string,"id": string,"key_hash": string,"key_prefix": string,"last_used_at": string | null,"name": string,"regenerated_at": string | null,"revoked_at": string | null,"revoked_reason": string | null,"scopes": (string)[],"user_id": string
+                    "created_at": string,"expires_at": string | null,"id": string,"key_hash": string,"key_prefix": string,"last_used_at": string | null,"name": string,"regenerated_at": string | null,"revoked_at": string | null,"revoked_reason": string | null,"scopes": (string)[],"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"key_hash": string,"key_prefix": string,"last_used_at"?: string | null,"name": string,"regenerated_at"?: string | null,"revoked_at"?: string | null,"revoked_reason"?: string | null,"scopes": (string)[],"user_id": string
+                    "created_at"?: string,"expires_at"?: string | null,"id"?: string,"key_hash": string,"key_prefix": string,"last_used_at"?: string | null,"name": string,"regenerated_at"?: string | null,"revoked_at"?: string | null,"revoked_reason"?: string | null,"scopes": (string)[],"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"key_hash"?: string,"key_prefix"?: string,"last_used_at"?: string | null,"name"?: string,"regenerated_at"?: string | null,"revoked_at"?: string | null,"revoked_reason"?: string | null,"scopes"?: (string)[],"user_id"?: string
+                    "created_at"?: string,"expires_at"?: string | null,"id"?: string,"key_hash"?: string,"key_prefix"?: string,"last_used_at"?: string | null,"name"?: string,"regenerated_at"?: string | null,"revoked_at"?: string | null,"revoked_reason"?: string | null,"scopes"?: (string)[],"user_id"?: string
                   }
                   Relationships: [
                     
@@ -311,14 +311,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"deleted_at": string | null,"favorites_public": boolean,"id": string,"likes_public": boolean,"updated_at": string,"username": string
+                    "allow_permanent_api_keys": boolean,"avatar_url": string | null,"created_at": string,"deleted_at": string | null,"favorites_public": boolean,"id": string,"likes_public": boolean,"reduce_motion": boolean,"updated_at": string,"username": string,"verified": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"favorites_public"?: boolean,"id": string,"likes_public"?: boolean,"updated_at"?: string,"username": string
+                    "allow_permanent_api_keys"?: boolean,"avatar_url"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"favorites_public"?: boolean,"id": string,"likes_public"?: boolean,"reduce_motion"?: boolean,"updated_at"?: string,"username": string,"verified"?: boolean
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"favorites_public"?: boolean,"id"?: string,"likes_public"?: boolean,"updated_at"?: string,"username"?: string
+                    "allow_permanent_api_keys"?: boolean,"avatar_url"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"favorites_public"?: boolean,"id"?: string,"likes_public"?: boolean,"reduce_motion"?: boolean,"updated_at"?: string,"username"?: string,"verified"?: boolean
                   }
                   Relationships: [
                     

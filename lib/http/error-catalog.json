@@ -24,6 +24,11 @@
     "message": "此 API Key 已撤銷",
     "message_en": "This API key has been revoked"
   },
+  "API_KEY_EXPIRED": {
+    "status": 401,
+    "message": "此 API Key 已過期",
+    "message_en": "This API key has expired"
+  },
   "INTERNAL_AUTH_INVALID": {
     "status": 401,
     "message": "內部驗證失敗",
@@ -214,6 +219,11 @@
     "message": "此名稱已被使用",
     "message_en": "This username is already taken"
   },
+  "AVATAR_SOURCE_UNAVAILABLE": {
+    "status": 409,
+    "message": "這個登入方式沒有可用的頭貼",
+    "message_en": "This sign-in provider has no picture to use"
+  },
   "APPEAL_TARGET_NOT_FOUND": {
     "status": 404,
     "message": "找不到此處分或違規紀錄",
@@ -233,6 +243,11 @@
     "status": 409,
     "message": "達 API Key 持有上限",
     "message_en": "API key limit reached"
+  },
+  "API_KEY_PERMANENT_DISABLED": {
+    "status": 403,
+    "message": "先在安全設置中允許永久 API Key",
+    "message_en": "Allow API keys without an end date in the security settings first"
   },
   "REAUTH_REQUIRED": {
     "status": 403,

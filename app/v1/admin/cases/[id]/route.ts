@@ -1,4 +1,5 @@
 import { COMMENT_SELECT, type CommentRow, toComment } from "@/lib/comments/serialize";
+import { AUDIT_SELECT, toAuditLogs } from "@/lib/governance/audit";
 import { CASE_SELECT, type CaseRow, previewOf, toCaseSummary } from "@/lib/governance/cases";
 import { toViolation, VIOLATION_SELECT, type ViolationRow } from "@/lib/governance/serialize";
 import { ApiError } from "@/lib/http/api-error";
@@ -54,7 +55,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     const target = await loadTarget(row);
     const [reports, audit, subject] = await Promise.all([
       db().from("reports").select("reason, detail, reporter_id, is_discounted, created_at").eq("case_id", row.id).order("created_at"),
-      db().from("audit_logs").select("id, actor_id, actor_type, action, target_type, target_id, metadata, request_id, created_at")
+      db().from("audit_logs").select(AUDIT_SELECT)
         .in("target_id", [row.id, row.target_id]).order("created_at", { ascending: false }).limit(50),
       target ? loadSubject(target.subjectId, row) : null,
     ]);
@@ -68,7 +69,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
       target: target?.body ?? null,
       reports: reports.data.map((report) => ({ ...report, created_at: iso(report.created_at) })),
       subject,
-      audit: audit.data.map((log) => ({ ...log, created_at: iso(log.created_at) })),
+      audit: await toAuditLogs(audit.data),
     }, requestId);
   }),
 });

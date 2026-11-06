@@ -14,6 +14,19 @@ type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 const REMOVAL_NOTICE_MS = 30 * 24 * 60 * 60 * 1000;
 
+// The image hosts the CSP allows (§11.4), as the sign-up hook checks them; anything else could be a tracking pixel
+const AVATAR_HOSTS = /^https:\/\/([a-z0-9-]+\.googleusercontent\.com|cdn\.discordapp\.com|avatars\.githubusercontent\.com)\//;
+
+/** §8.7.1: the picture the provider gave this account's own identity, read from Auth rather than taken from the caller. */
+async function providerAvatar(userId: string, provider: string): Promise<string> {
+  const { data, error } = await db().auth.admin.getUserById(userId);
+  if (error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: error });
+  const identity = data.user?.identities?.find((item) => item.provider === provider);
+  const url = identity?.identity_data?.avatar_url ?? identity?.identity_data?.picture;
+  if (typeof url !== "string" || !AVATAR_HOSTS.test(url)) throw new ApiError("AVATAR_SOURCE_UNAVAILABLE");
+  return url;
+}
+
 async function me(userId: string, updatedProfile?: Profile) {
   const [profile, standing, roles, sanctions, removals] = await Promise.all([
     updatedProfile
@@ -45,6 +58,8 @@ async function me(userId: string, updatedProfile?: Profile) {
     avatar_url: p.avatar_url,
     likes_public: p.likes_public,
     favorites_public: p.favorites_public,
+    allow_permanent_api_keys: p.allow_permanent_api_keys,
+    reduce_motion: p.reduce_motion,
     roles: roles.data.map((row) => row.role),
     standing: toStanding(standing.data),
     pending_notices: pendingNotices,
@@ -58,9 +73,14 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
   }),
   PATCH: withRoute({ auth: "user", rate: "RL-SENSITIVE", cache: "C-NONE", body: updateMeBody }, async ({ caller, body, requestId }) => {
     const userId = identified(caller).userId;
-    if (body.username !== undefined) await enforceAction(userId, "username_change");
-    const profile = await rpc("update_profile", { actor: userId, ...body }, { requestId });
-    if (body.username !== undefined) updateSubmitter(userId, { username: profile.username });
+    const { avatar_provider: provider, ...fields } = body;
+    if (fields.username !== undefined) await enforceAction(userId, "username_change");
+    // set_avatar without a URL clears the picture
+    const avatar = provider === undefined ? {} : { set_avatar: true, ...(provider !== null && { avatar_url: await providerAvatar(userId, provider) }) };
+    const profile = await rpc("update_profile", { actor: userId, ...fields, ...avatar }, { requestId });
+    if (fields.username !== undefined || provider !== undefined) {
+      updateSubmitter(userId, { username: profile.username, avatar_url: profile.avatar_url });
+    }
     return json(await me(userId, profile), requestId);
   }),
 });

@@ -20,7 +20,7 @@ const quote = (id: string, category = "anime", length = 10, submitter = "u1"): P
   length,
   category: { key: category, name: category },
   source_from: "來源",
-  submitter: { id: submitter, username: "小明", deleted: false },
+  submitter: { id: submitter, username: "小明", avatar_url: null, deleted: false, verified: false },
   stats: { like_count: 0, favorite_count: 0, comment_count: 0 },
   status: "published",
   commit_from: "web",
@@ -149,10 +149,10 @@ describe("pool (§10.3)", () => {
 
   it("updates stats and submitters", () => {
     updateStats("g1", { like_count: 5 });
-    updateSubmitter("u1", { username: "新名字", deleted: true });
+    updateSubmitter("u1", { username: "新名字", avatar_url: null, deleted: true });
     expect(draw({ categories: ["game"] })).toMatchObject({
       stats: { like_count: 5 },
-      submitter: { username: "新名字", deleted: true },
+      submitter: { username: "新名字", avatar_url: null, deleted: true },
     });
   });
 

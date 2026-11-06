@@ -1028,8 +1028,12 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 username: string;
+                /** @description 沒有頭像或帳號已刪除時為 null */
+                avatar_url: string | null;
                 /** @description 帳號已刪除時為 true。該名稱可能已被他人使用，須顯示「已刪除」且不連到個人頁（D-35） */
                 deleted: boolean;
+                /** @description 說說認證的帳號（例如說說官方），名稱旁顯示認證標記；只能在該環境以 SQL 設定 */
+                verified: boolean;
             };
             /** @description 最多 60 秒的延遲 */
             stats: {
@@ -1064,8 +1068,12 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 username: string;
+                /** @description 沒有頭像或帳號已刪除時為 null */
+                avatar_url: string | null;
                 /** @description 帳號已刪除時為 true。該名稱可能已被他人使用，須顯示「已刪除」且不連到個人頁（D-35） */
                 deleted: boolean;
+                /** @description 說說認證的帳號（例如說說官方），名稱旁顯示認證標記；只能在該環境以 SQL 設定 */
+                verified: boolean;
             };
             /** @description 最多 60 秒的延遲 */
             stats: {
@@ -1096,6 +1104,8 @@ export interface components {
                 id: string;
                 username: string;
                 avatar_url: string | null;
+                /** @description 說說認證的帳號（例如說說官方），名稱旁顯示認證標記；只能在該環境以 SQL 設定 */
+                verified: boolean;
             };
             /** Format: date-time */
             pinned_at: string | null;
@@ -1112,6 +1122,13 @@ export interface components {
             likes_public: boolean;
             favorites_public: boolean;
             quote_count: number;
+            /**
+             * @description 帳號狀態，只有狀態本身公開（不含原因與期限）：`banned` 已停權、`suspended` 暫停提交中
+             * @enum {string}
+             */
+            standing: "active" | "suspended" | "banned";
+            /** @description 說說認證的帳號（例如說說官方），個人頁顯示「已驗證」；只能在該環境以 SQL 設定 */
+            verified: boolean;
             /** Format: date-time */
             created_at: string;
         };
@@ -1121,6 +1138,11 @@ export interface components {
             name: string;
             key_prefix: string;
             scopes: components["schemas"]["ApiKeyScope"][];
+            /**
+             * Format: date-time
+             * @description 到期時間；null 為沒有有效期限
+             */
+            expires_at: string | null;
             /** Format: date-time */
             last_used_at: string | null;
             /** Format: date-time */
@@ -1134,6 +1156,11 @@ export interface components {
             name: string;
             key_prefix: string;
             scopes: components["schemas"]["ApiKeyScope"][];
+            /**
+             * Format: date-time
+             * @description 到期時間；null 為沒有有效期限
+             */
+            expires_at: string | null;
             /** Format: date-time */
             last_used_at: string | null;
             /** Format: date-time */
@@ -1185,6 +1212,12 @@ export interface components {
             /** @enum {string|null} */
             appeal_status: "pending" | "accepted" | "rejected" | null;
             sanction: components["schemas"]["Sanction"] | null;
+            /** @description 只在 `GET /v1/me/violations`：被檢舉的是說說還是留言，以及當時的內容；內容已不存在時為 null */
+            target?: {
+                /** @enum {string} */
+                type: "quote" | "comment";
+                content: string | null;
+            };
         };
         CaseSummary: {
             /** Format: uuid */
@@ -1250,6 +1283,8 @@ export interface components {
             id: number;
             /** Format: uuid */
             actor_id: string | null;
+            /** @description 操作者目前的名稱與頭像；系統動作或已無個人檔案時為 null */
+            actor: components["schemas"]["AuditActor"] | null;
             /** @enum {string} */
             actor_type: "user" | "admin" | "system";
             action: string;
@@ -1262,6 +1297,16 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        AuditActor: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            avatar_url: string | null;
+            /** @description 帳號已刪除，名稱仍保留 */
+            deleted: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
         Me: {
             /** Format: uuid */
             id: string;
@@ -1269,6 +1314,10 @@ export interface components {
             avatar_url: string | null;
             likes_public: boolean;
             favorites_public: boolean;
+            /** @description 是否允許建立沒有有效期限的 API Key */
+            allow_permanent_api_keys: boolean;
+            /** @description 是否減少動態效果 */
+            reduce_motion: boolean;
             roles: "admin"[];
             standing: components["schemas"]["Standing"];
             pending_notices: {
@@ -2391,12 +2440,21 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    /** @description NFC 後 2 至 30 字，僅限中英文、數字、`_`、`-`（D-35） */
+                    /** @description NFC 後 2 至 30 字，僅限中英文、數字、`_`、`-`，不可包含「已刪除」與「說說官方」（D-35） */
                     username?: string;
                     /** @description 是否公開我的按讚（D-36） */
                     likes_public?: boolean;
                     /** @description 是否公開我的收藏（D-36） */
                     favorites_public?: boolean;
+                    /** @description 是否允許建立沒有有效期限的 API Key（§8.8.2）；改為 false 時，所有沒有有效期限的有效金鑰會一併撤銷 */
+                    allow_permanent_api_keys?: boolean;
+                    /** @description 減少動態效果，跟著帳號到每台登入的裝置（§12.8） */
+                    reduce_motion?: boolean;
+                    /**
+                     * @description 頭貼採用哪個已綁定登入方式提供的圖片；null 為不使用頭貼（§8.7.1）
+                     * @enum {string|null}
+                     */
+                    avatar_provider?: "google" | "github" | "discord" | null;
                 };
             };
         };
@@ -2923,7 +2981,8 @@ export interface operations {
                  *       "name": "我的部落格",
                  *       "scopes": [
                  *         "quotes:read"
-                 *       ]
+                 *       ],
+                 *       "expires_in_days": 90
                  *     }
                  */
                 "application/json": {
@@ -2935,6 +2994,12 @@ export interface operations {
                      *     ]
                      */
                     scopes?: components["schemas"]["ApiKeyScope"][];
+                    /**
+                     * @description 有效天數；null 為沒有有效期限，須先以 PATCH /v1/me 允許（§8.8.2）
+                     * @default 90
+                     * @enum {integer|null}
+                     */
+                    expires_in_days?: 30 | 60 | 90 | 180 | 360 | null;
                 };
             };
         };
@@ -3587,6 +3652,8 @@ export interface operations {
         parameters: {
             query?: {
                 actor_id?: string;
+                /** @description 操作者目前名稱的一部分，不分大小寫 */
+                actor?: string;
                 target_id?: string;
                 action?: string;
                 from?: string;

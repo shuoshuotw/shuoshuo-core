@@ -4,7 +4,7 @@ import { iso } from "@/lib/http/pagination";
 export const QUOTE_SELECT = `
   id, content, length, source_from, status, commit_from, edited_at, created_at, removed_reason, removed_at,
   category:categories!inner(key, name_zh),
-  submitter:profiles!quotes_submitter_id_fkey!inner(id, username, deleted_at),
+  submitter:profiles!quotes_submitter_id_fkey!inner(id, username, avatar_url, deleted_at, verified),
   stats:quote_stats(like_count, favorite_count, comment_count)
 ` as const;
 
@@ -20,7 +20,7 @@ export type QuoteRow = {
   removed_reason: string | null;
   removed_at: string | null;
   category: { key: string; name_zh: string };
-  submitter: { id: string; username: string; deleted_at: string | null };
+  submitter: { id: string; username: string; avatar_url: string | null; deleted_at: string | null; verified: boolean };
   stats: { like_count: number; favorite_count: number; comment_count: number } | null;
 };
 
@@ -31,7 +31,7 @@ export function toQuote(row: QuoteRow) {
     length: row.length,
     category: { key: row.category.key, name: row.category.name_zh },
     source_from: row.source_from,
-    submitter: { id: row.submitter.id, username: row.submitter.username, deleted: row.submitter.deleted_at !== null },
+    submitter: { id: row.submitter.id, username: row.submitter.username, avatar_url: row.submitter.avatar_url, deleted: row.submitter.deleted_at !== null, verified: row.submitter.verified },
     stats: {
       like_count: row.stats?.like_count ?? 0,
       favorite_count: row.stats?.favorite_count ?? 0,

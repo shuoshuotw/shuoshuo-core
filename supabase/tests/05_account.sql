@@ -1,7 +1,7 @@
 -- API keys, profile, sanctions, account deletion and reads (SPEC §6.6, §10.3, §11.5, D-37)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(42);
+select plan(51);
 
 set local role service_role;
 
@@ -18,10 +18,10 @@ insert into ids values
   ('seed_bob', '00000000-0000-4000-8000-000000000105');
 
 -- API keys
-insert into ids select 'key1', (private.create_api_key(pg_temp.id('alice'), '部落格', 'shuoshuo_test_aaaaaaaa', pg_temp.hash('k1'), array['quotes:read'])->>'id')::uuid;
+insert into ids select 'key1', (private.create_api_key(pg_temp.id('alice'), '部落格', 'shuoshuo_test_aaaaaaaa', pg_temp.hash('k1'), array['quotes:read'], now() + interval '90 days')->>'id')::uuid;
 select is(
   (select array_agg(k order by k) from jsonb_object_keys(private.api_key_json((select k from public.api_keys k where k.id = pg_temp.id('key1')))) k),
-  array['created_at', 'id', 'key_prefix', 'last_used_at', 'name', 'regenerated_at', 'scopes'],
+  array['created_at', 'expires_at', 'id', 'key_prefix', 'last_used_at', 'name', 'regenerated_at', 'scopes'],
   'SEC-06 api_key_json carries no hash'
 );
 select throws_ok($$select private.revoke_api_key(pg_temp.id('bob'), pg_temp.id('key1'))$$, 'P0001', 'API_KEY_NOT_FOUND', 'SEC-04 cannot revoke another user''s key');
@@ -31,18 +31,28 @@ select lives_ok($$select private.revoke_api_key(pg_temp.id('alice'), pg_temp.id(
 select throws_ok($$select private.regenerate_api_key(pg_temp.id('alice'), pg_temp.id('key1'), 'x', pg_temp.hash('k3'))$$, 'P0001', 'API_KEY_NOT_FOUND', 'revoked key cannot regenerate');
 do $$ begin
   for i in 1..10 loop
-    perform private.create_api_key(pg_temp.id('bob'), 'k' || i, 'p' || i, pg_temp.hash('bob' || i), array['quotes:read']);
+    perform private.create_api_key(pg_temp.id('bob'), 'k' || i, 'p' || i, pg_temp.hash('bob' || i), array['quotes:read'], now() + interval '30 days');
   end loop;
 end $$;
-select throws_ok($$select private.create_api_key(pg_temp.id('bob'), 'k11', 'p11', pg_temp.hash('bob11'), array['quotes:read'])$$, 'P0001', 'API_KEY_LIMIT_REACHED', 'SEC-08 limit of 10');
+select throws_ok($$select private.create_api_key(pg_temp.id('bob'), 'k11', 'p11', pg_temp.hash('bob11'), array['quotes:read'], now() + interval '30 days')$$, 'P0001', 'API_KEY_LIMIT_REACHED', 'SEC-08 limit of 10');
+
+select throws_ok($$select private.create_api_key(pg_temp.id('alice'), '永久', 'p0', pg_temp.hash('forever'), array['quotes:read'], null)$$, 'P0001', 'API_KEY_PERMANENT_DISABLED', 'a key without an end date needs the setting');
+select is((private.update_profile(pg_temp.id('alice'), allow_permanent_api_keys => true)).allow_permanent_api_keys, true, 'the setting turns on');
+select is((private.create_api_key(pg_temp.id('alice'), '永久', 'p0', pg_temp.hash('forever'), array['quotes:read'], null))->>'expires_at', null, 'then a key may have no end date');
+select lives_ok($$select private.update_profile(pg_temp.id('alice'), allow_permanent_api_keys => false)$$, 'the leave can be taken back');
+select is((select count(*)::int from public.api_keys where user_id = pg_temp.id('alice') and expires_at is null and revoked_at is null), 0, 'taking it back revokes the keys that never expire');
 
 -- Profile
 select is((private.update_profile(pg_temp.id('alice'), likes_public => false)).likes_public, false, 'privacy setting changes');
 select is((private.update_profile(pg_temp.id('alice'), likes_public => null)).likes_public, false, 'null leaves a field unchanged');
+select is((private.update_profile(pg_temp.id('alice'), set_avatar => true, avatar_url => 'https://avatars.githubusercontent.com/u/1')).avatar_url, 'https://avatars.githubusercontent.com/u/1', 'the picture changes');
+select is((private.update_profile(pg_temp.id('alice'), reduce_motion => true)).reduce_motion, true, 'the motion setting is kept on the account');
+select is((private.update_profile(pg_temp.id('alice'), likes_public => true)).avatar_url, 'https://avatars.githubusercontent.com/u/1', 'other changes leave the picture');
+select is((private.update_profile(pg_temp.id('alice'), set_avatar => true, avatar_url => null)).avatar_url, null, 'the picture can be taken away');
 select throws_ok($$select private.update_profile(pg_temp.id('alice'), '阿華')$$, 'P0001', 'USERNAME_TAKEN', 'name in use');
 select lives_ok($$select private.update_profile(pg_temp.id('alice'), '新名字')$$, 'name can change');
 select throws_ok($$select private.reset_profile(pg_temp.id('bob'), pg_temp.id('alice'), '不當')$$, 'P0001', 'FORBIDDEN_ROLE', 'non-admin cannot reset');
-select matches((private.reset_profile(pg_temp.id('admin'), pg_temp.id('alice'), '不當名稱')).username, '^讀者[0-9a-f]{4}$', 'reset gives the default form');
+select matches((private.reset_profile(pg_temp.id('admin'), pg_temp.id('alice'), '不當名稱')).username, '^說說使用者-[0-9A-F]{5}$', 'reset gives the default form');
 
 -- Manual sanctions
 select throws_ok($$select * from private.create_sanction(pg_temp.id('bob'), pg_temp.id('carol'), 'account_ban', null, 'x')$$, 'P0001', 'FORBIDDEN_ROLE', 'non-admin cannot sanction');

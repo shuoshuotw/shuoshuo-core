@@ -17,6 +17,7 @@
     "gen:db": "supabase gen types typescript --local --schema public --schema private > lib/database.types.ts",
     "test:db": "supabase test db",
     "gen:errors": "node scripts/generate-error-catalog.mjs",
+    "dev:state": "node scripts/dev-state.mjs",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },

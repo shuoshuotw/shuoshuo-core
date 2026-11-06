@@ -56,6 +56,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -195,6 +196,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -301,6 +303,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -435,6 +438,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -536,6 +540,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -652,6 +657,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -795,6 +801,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -893,6 +900,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1012,6 +1020,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1132,6 +1141,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1251,6 +1261,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1371,6 +1382,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1481,6 +1493,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1606,6 +1619,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1732,6 +1746,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1827,6 +1842,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -1944,6 +1960,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2061,6 +2078,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2209,6 +2227,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2354,6 +2373,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2437,6 +2457,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2451,6 +2472,7 @@ paths:
         - API_KEY_NOT_ALLOWED
         - ACCOUNT_BANNED
         - USERNAME_TAKEN
+        - AVATAR_SOURCE_UNAVAILABLE
       x-codeSamples:
         - lang: curl
           label: curl
@@ -2481,13 +2503,29 @@ paths:
                   type: string
                   minLength: 2
                   maxLength: 30
-                  description: NFC 後 2 至 30 字，僅限中英文、數字、`_`、`-`（D-35）
+                  description: NFC 後 2 至 30 字，僅限中英文、數字、`_`、`-`，不可包含「已刪除」與「說說官方」（D-35）
                 likes_public:
                   type: boolean
                   description: 是否公開我的按讚（D-36）
                 favorites_public:
                   type: boolean
                   description: 是否公開我的收藏（D-36）
+                allow_permanent_api_keys:
+                  type: boolean
+                  description: 是否允許建立沒有有效期限的 API Key（§8.8.2）；改為 false 時，所有沒有有效期限的有效金鑰會一併撤銷
+                reduce_motion:
+                  type: boolean
+                  description: 減少動態效果，跟著帳號到每台登入的裝置（§12.8）
+                avatar_provider:
+                  type:
+                    - string
+                    - "null"
+                  enum:
+                    - google
+                    - github
+                    - discord
+                    - null
+                  description: 頭貼採用哪個已綁定登入方式提供的圖片；null 為不使用頭貼（§8.7.1）
             example:
               username: 小明
               likes_public: false
@@ -2556,6 +2594,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2674,6 +2713,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2783,6 +2823,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -2892,6 +2933,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3005,6 +3047,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3145,6 +3188,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3253,6 +3297,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3361,6 +3406,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3511,6 +3557,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3621,6 +3668,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3739,6 +3787,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3825,6 +3874,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -3839,6 +3889,7 @@ paths:
         - API_KEY_NOT_ALLOWED
         - ACCOUNT_BANNED
         - REAUTH_REQUIRED
+        - API_KEY_PERMANENT_DISABLED
         - API_KEY_LIMIT_REACHED
       x-codeSamples:
         - lang: curl
@@ -3878,10 +3929,24 @@ paths:
                   default:
                     - quotes:read
                   description: 自動併入 quotes:read
+                expires_in_days:
+                  type:
+                    - integer
+                    - "null"
+                  enum:
+                    - 30
+                    - 60
+                    - 90
+                    - 180
+                    - 360
+                    - null
+                  default: 90
+                  description: 有效天數；null 為沒有有效期限，須先以 PATCH /v1/me 允許（§8.8.2）
             example:
               name: 我的部落格
               scopes:
                 - quotes:read
+              expires_in_days: 90
       responses:
         "201":
           description: 成功
@@ -3943,6 +4008,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4047,6 +4113,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4139,6 +4206,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4243,6 +4311,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4369,6 +4438,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4469,6 +4539,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4654,6 +4725,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4815,6 +4887,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -4975,6 +5048,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5120,6 +5194,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5278,6 +5353,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5416,6 +5492,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5545,6 +5622,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5582,6 +5660,14 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: actor
+          in: query
+          required: false
+          description: 操作者目前名稱的一部分，不分大小寫
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 30
         - name: target_id
           in: query
           required: false
@@ -5684,6 +5770,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5761,6 +5848,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -5843,6 +5931,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - ROUTE_NOT_FOUND
@@ -5934,6 +6023,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -6019,6 +6109,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -6129,6 +6220,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -6246,6 +6338,7 @@ paths:
         - TOKEN_EXPIRED
         - API_KEY_INVALID
         - API_KEY_REVOKED
+        - API_KEY_EXPIRED
         - INTERNAL_AUTH_INVALID
         - RATE_LIMITED
         - INTERNAL_ERROR
@@ -6611,7 +6704,9 @@ components:
           required:
             - id
             - username
+            - avatar_url
             - deleted
+            - verified
           additionalProperties: false
           properties:
             id:
@@ -6619,9 +6714,17 @@ components:
               format: uuid
             username:
               type: string
+            avatar_url:
+              type:
+                - string
+                - "null"
+              description: 沒有頭像或帳號已刪除時為 null
             deleted:
               type: boolean
               description: 帳號已刪除時為 true。該名稱可能已被他人使用，須顯示「已刪除」且不連到個人頁（D-35）
+            verified:
+              type: boolean
+              description: 說說認證的帳號（例如說說官方），名稱旁顯示認證標記；只能在該環境以 SQL 設定
         stats:
           type: object
           required:
@@ -6702,7 +6805,9 @@ components:
           required:
             - id
             - username
+            - avatar_url
             - deleted
+            - verified
           additionalProperties: false
           properties:
             id:
@@ -6710,9 +6815,17 @@ components:
               format: uuid
             username:
               type: string
+            avatar_url:
+              type:
+                - string
+                - "null"
+              description: 沒有頭像或帳號已刪除時為 null
             deleted:
               type: boolean
               description: 帳號已刪除時為 true。該名稱可能已被他人使用，須顯示「已刪除」且不連到個人頁（D-35）
+            verified:
+              type: boolean
+              description: 說說認證的帳號（例如說說官方），名稱旁顯示認證標記；只能在該環境以 SQL 設定
         stats:
           type: object
           required:
@@ -6782,6 +6895,7 @@ components:
             - id
             - username
             - avatar_url
+            - verified
           additionalProperties: false
           properties:
             id:
@@ -6793,6 +6907,9 @@ components:
               type:
                 - string
                 - "null"
+            verified:
+              type: boolean
+              description: 說說認證的帳號（例如說說官方），名稱旁顯示認證標記；只能在該環境以 SQL 設定
         pinned_at:
           type:
             - string
@@ -6815,6 +6932,8 @@ components:
         - likes_public
         - favorites_public
         - quote_count
+        - standing
+        - verified
         - created_at
       additionalProperties: false
       properties:
@@ -6833,6 +6952,16 @@ components:
           type: boolean
         quote_count:
           type: integer
+        standing:
+          type: string
+          description: 帳號狀態，只有狀態本身公開（不含原因與期限）：`banned` 已停權、`suspended` 暫停提交中
+          enum:
+            - active
+            - suspended
+            - banned
+        verified:
+          type: boolean
+          description: 說說認證的帳號（例如說說官方），個人頁顯示「已驗證」；只能在該環境以 SQL 設定
         created_at:
           type: string
           format: date-time
@@ -6843,6 +6972,7 @@ components:
         - name
         - key_prefix
         - scopes
+        - expires_at
         - last_used_at
         - regenerated_at
         - created_at
@@ -6859,6 +6989,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApiKeyScope"
+        expires_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: 到期時間；null 為沒有有效期限
         last_used_at:
           type:
             - string
@@ -6879,6 +7015,7 @@ components:
         - name
         - key_prefix
         - scopes
+        - expires_at
         - last_used_at
         - regenerated_at
         - created_at
@@ -6896,6 +7033,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApiKeyScope"
+        expires_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: 到期時間；null 為沒有有效期限
         last_used_at:
           type:
             - string
@@ -7039,6 +7182,23 @@ components:
           oneOf:
             - $ref: "#/components/schemas/Sanction"
             - type: "null"
+        target:
+          type: object
+          description: 只在 `GET /v1/me/violations`：被檢舉的是說說還是留言，以及當時的內容；內容已不存在時為 null
+          required:
+            - type
+            - content
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum:
+                - quote
+                - comment
+            content:
+              type:
+                - string
+                - "null"
     CaseSummary:
       type: object
       required:
@@ -7221,6 +7381,7 @@ components:
       required:
         - id
         - actor_id
+        - actor
         - actor_type
         - action
         - target_type
@@ -7237,6 +7398,11 @@ components:
             - string
             - "null"
           format: uuid
+        actor:
+          description: 操作者目前的名稱與頭像；系統動作或已無個人檔案時為 null
+          oneOf:
+            - $ref: "#/components/schemas/AuditActor"
+            - type: "null"
         actor_type:
           type: string
           enum:
@@ -7263,6 +7429,31 @@ components:
         created_at:
           type: string
           format: date-time
+    AuditActor:
+      type: object
+      required:
+        - id
+        - username
+        - avatar_url
+        - deleted
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        avatar_url:
+          type:
+            - string
+            - "null"
+        deleted:
+          type: boolean
+          description: 帳號已刪除，名稱仍保留
+        created_at:
+          type: string
+          format: date-time
     Me:
       type: object
       required:
@@ -7271,6 +7462,8 @@ components:
         - avatar_url
         - likes_public
         - favorites_public
+        - allow_permanent_api_keys
+        - reduce_motion
         - roles
         - standing
         - pending_notices
@@ -7290,6 +7483,12 @@ components:
           type: boolean
         favorites_public:
           type: boolean
+        allow_permanent_api_keys:
+          type: boolean
+          description: 是否允許建立沒有有效期限的 API Key
+        reduce_motion:
+          type: boolean
+          description: 是否減少動態效果
         roles:
           type: array
           items:

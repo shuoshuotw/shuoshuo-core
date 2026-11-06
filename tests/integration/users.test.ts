@@ -85,7 +85,7 @@ describe("public users", () => {
     return {
       id: quote.id, content: quote.content, length: Array.from(quote.content).length,
       category: { key: "other", name: "其他" }, source_from: "card-3",
-      submitter: { id: owner.id, username, deleted: false },
+      submitter: { id: owner.id, username, avatar_url: null, deleted: false, verified: false },
       stats: { like_count: 1, favorite_count: 1, comment_count: 0 },
       status: quote.status as Quote["status"], commit_from: "api", edited_at: null,
       created_at: new Date(quote.created_at).toISOString(),
@@ -113,6 +113,15 @@ describe("public users", () => {
     otherKey = await keyFor(other, ["quotes:read", "me:read"]);
   });
 
+  it("an account the site vouches for (說說官方) says so on its profile and on its quotes", async () => {
+    const vouched = await createUser(); users.push(vouched);
+    const marked = await admin.from("profiles").update({ verified: true }).eq("id", vouched.id).select("username").single();
+    if (marked.error) throw marked.error;
+    const quote = await fixtureQuote(vouched);
+    expect((await call(`/v1/users/${encodeURIComponent(marked.data.username)}`)).data).toMatchObject({ verified: true });
+    expect((await call(`/v1/quotes/${quote.id}`)).data).toMatchObject({ submitter: { id: vouched.id, verified: true } });
+  });
+
   it("PV-05: URL-encoded names are case-insensitive, wildcard characters are literal, and the profile has only contract fields", async () => {
     const response = await call(`/v1/users/${encodeURIComponent(username.toUpperCase())}`);
     expect(response.status).toBe(200);
@@ -120,7 +129,7 @@ describe("public users", () => {
     if (profile.error) throw profile.error;
     expect(response.data).toEqual({
       id: owner.id, username, avatar_url: null, likes_public: true, favorites_public: true,
-      quote_count: 2, created_at: new Date(profile.data.created_at).toISOString(),
+      quote_count: 2, standing: "active", verified: false, created_at: new Date(profile.data.created_at).toISOString(),
     });
     expect(response.meta).toEqual({ request_id: response.headers.get("x-request-id") });
     expect(response.headers.get("cache-control")).toBe(CACHE);

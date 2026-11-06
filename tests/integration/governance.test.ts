@@ -202,6 +202,7 @@ describe("resolving cases", () => {
     expect(violations.data).toEqual([{
       id: violationId, quote_id: quoteId, reason: "spam", counts_as_strike: true, overturned_at: null,
       created_at: expect.stringMatching(ISO), appeal_status: null, sanction,
+      target: { type: "quote", content: expect.any(String) },
     }]);
     expect(violations.raw).not.toContain(reporter.id);
     expect((await call("/v1/me/sanctions", { token: owner.token })).data).toEqual([sanction]);
@@ -233,6 +234,10 @@ describe("resolving cases", () => {
     const violationId = (resolved.data as unknown as { effects: { violation_id: string; strike_count: number | null; target_status: string } }).effects;
     expect(violationId).toMatchObject({ target_status: "removed", strike_count: null, sanction: null });
     expect(await checked(admin.from("quote_stats").select("comment_count").eq("quote_id", quoteId).single())).toEqual({ comment_count: 0 });
+    // The author sees what was taken down: the comment's own words
+    const { content } = await checked(admin.from("comments").select("content").eq("id", commentId).single());
+    const [own] = (await call("/v1/me/violations", { token: author.token })).data as unknown as { target: unknown }[];
+    expect(own!.target).toEqual({ type: "comment", content });
 
     const appealed = await call("/v1/me/appeals", { method: "POST", token: author.token, body: { target_type: "violation", target_id: violationId.violation_id, statement: STATEMENT } });
     expect(appealed.status, appealed.raw).toBe(201);
@@ -414,8 +419,10 @@ describe("user administration", () => {
     expect(response.data).toEqual({ id: user.id, username: expect.any(String) });
     expect(username).not.toBe(before.username);
     const logs = await call(`/v1/admin/audit-logs?target_id=${user.id}&action=profile.reset`, { token: moderator.token });
+    const actor = await checked(admin.from("profiles").select("username, avatar_url").eq("id", moderator.id).single()) as { username: string; avatar_url: string | null };
     expect(logs.data).toEqual([{
       id: expect.any(Number), actor_id: moderator.id, actor_type: "admin", action: "profile.reset", target_type: "user", target_id: user.id,
+      actor: { id: moderator.id, username: actor.username, avatar_url: actor.avatar_url, deleted: false, created_at: expect.stringMatching(ISO) },
       metadata: { before: before.username, after: username, reason: "不當名稱" }, request_id: expect.anything(), created_at: expect.stringMatching(ISO),
     }]);
   });
@@ -434,6 +441,10 @@ describe("user administration", () => {
     expect((await call(`${path}&from=2999-01-01T00:00:00Z`, { token: moderator.token })).data).toEqual([]);
     expect((await call(`${path}&to=2000-01-01T00:00:00Z`, { token: moderator.token })).data).toEqual([]);
     expect((await call(`/v1/admin/audit-logs?actor_id=${user.id}`, { token: moderator.token })).data).toEqual([]);
+    // By the name the admin goes by now, or nobody when no one goes by it
+    const { username } = await checked(admin.from("profiles").select("username").eq("id", moderator.id).single()) as { username: string };
+    expect((await call(`${path}&actor=${encodeURIComponent(username)}`, { token: moderator.token })).data).toHaveLength(2);
+    expect((await call(`${path}&actor=${encodeURIComponent("查無此人%_")}`, { token: moderator.token })).data).toEqual([]);
     expectError(await call("/v1/admin/audit-logs?action=made.up", { token: moderator.token }), 400, "VALIDATION_FAILED");
     expectError(await call("/v1/admin/audit-logs?from=yesterday", { token: moderator.token }), 400, "VALIDATION_FAILED");
   });
@@ -476,7 +487,7 @@ describe("POST /v1/me/account-deletion", () => {
 
     const quote = await call(`/v1/quotes/${quoteId}`);
     expect(quote.status, quote.raw).toBe(200);
-    expect(quote.data).toMatchObject({ submitter: { id: user.id, username: profile.username, deleted: true } });
+    expect(quote.data).toMatchObject({ submitter: { id: user.id, username: profile.username, avatar_url: null, deleted: true } });
     expectError(await call(`/v1/users/${encodeURIComponent(profile.username)}`), 404, "USER_NOT_FOUND");
 
     const governance = await call(`/v1/admin/users/${user.id}`, { token: moderator.token });

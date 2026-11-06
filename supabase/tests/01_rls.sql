@@ -80,7 +80,7 @@ select is((select count(*)::int from public.audit_logs where action = 'rls.old')
 select is(
   (select array_agg(p.proname::text order by p.proname::text) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname in ('public', 'private') and p.prosecdef),
-  array['handle_new_user', 'hook_before_user_created', 'set_identity_block'],
+  array['broadcast_quote_stats', 'handle_new_user', 'hook_before_user_created', 'set_identity_block'],
   'RLS-08 SECURITY DEFINER whitelist'
 );
 
