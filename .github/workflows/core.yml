@@ -41,7 +41,7 @@ jobs:
       - name: Start Core
         run: |
           pnpm start > core.log 2>&1 &
-          for _ in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3001/v1/health && exit 0; sleep 1; done
+          for _ in $(seq 1 30); do curl -sf -o /dev/null http://localhost:5001/v1/health && exit 0; sleep 1; done
           cat core.log
           exit 1
       - run: pnpm test:integration

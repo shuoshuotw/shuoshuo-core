@@ -3,7 +3,7 @@
 # Needs `supabase start`, a running Core at CORE_URL, and `st` on PATH. Writes fuzz data, so only point it at a throwaway database.
 set -euo pipefail
 
-CORE_URL="${CORE_URL:-http://localhost:3001}"
+CORE_URL="${CORE_URL:-http://localhost:5001}"
 SUPABASE_URL=http://127.0.0.1:54321
 SECRET=$(grep -E '^SUPABASE_SECRET_KEY=' .env.local | cut -d= -f2- | tr -d '\r')
 PUBLISHABLE=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH

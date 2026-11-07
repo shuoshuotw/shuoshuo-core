@@ -81,7 +81,7 @@ describe("SEC-03: every operation in the contract", () => {
   });
 
   it.each(["/v1/me", "/v1/admin/cases"])("API-08: %s answers other origins with the site's origin, and never allows credentials", async (path) => {
-    const response = await fetch(`${process.env.CORE_URL ?? "http://localhost:3001"}${path}`, { headers: { origin: "https://evil.example", "cf-connecting-ip": "10.9.9.9" } });
+    const response = await fetch(`${process.env.CORE_URL ?? "http://localhost:5001"}${path}`, { headers: { origin: "https://evil.example", "cf-connecting-ip": "10.9.9.9" } });
     expect(response.headers.get("access-control-allow-origin")).not.toBe("https://evil.example");
     expect(response.headers.get("access-control-allow-origin")).not.toBe("*");
     expect(response.headers.get("access-control-allow-credentials")).toBeNull();

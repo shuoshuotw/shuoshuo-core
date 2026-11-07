@@ -153,7 +153,7 @@ describe("API key management (SEC-04 through SEC-08)", () => {
       ["{}", "text/plain", 415, "UNSUPPORTED_MEDIA_TYPE"],
       [JSON.stringify({ name: "名".repeat(6000) }), "application/json", 413, "PAYLOAD_TOO_LARGE"],
     ] as const) {
-      const response = await fetch(`${process.env.CORE_URL ?? "http://localhost:3001"}${ROOT}`, {
+      const response = await fetch(`${process.env.CORE_URL ?? "http://localhost:5001"}${ROOT}`, {
         method: "POST", headers: { authorization: `Bearer ${user.token}`, "content-type": contentType,
           "cf-connecting-ip": `10.249.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` }, body,
       });

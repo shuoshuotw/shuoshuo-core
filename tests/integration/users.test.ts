@@ -39,7 +39,7 @@ async function hmacCall(path: string, token?: string) {
   const timestamp = String(Math.floor(Date.now() / 1000));
   const secret = process.env.INTERNAL_HMAC_SECRETS!.split(",")[0]!;
   const signature = createHmac("sha256", secret).update(`${timestamp}.GET.${path}`).digest("hex");
-  const response = await fetch(`${process.env.CORE_URL ?? "http://localhost:3001"}${path}`, {
+  const response = await fetch(`${process.env.CORE_URL ?? "http://localhost:5001"}${path}`, {
     headers: {
       "x-shuoshuo-internal": `v1.${timestamp}.${signature}`,
       "cf-connecting-ip": `10.249.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
