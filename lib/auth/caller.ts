@@ -1,4 +1,4 @@
-export type ApiKeyScope = "quotes:read" | "quotes:write" | "reactions:write" | "comments:write" | "me:read";
+export type ApiKeyScope = "quotes:read" | "quotes:write" | "reactions:write" | "me:read";
 
 export type AmrEntry = { method: string; timestamp: number };
 

@@ -36,7 +36,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     },
   ),
   POST: withRoute(
-    { auth: "user_or_key", scope: "comments:write", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "QUOTE_NOT_FOUND", body: commentBody },
+    { auth: "user", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "QUOTE_NOT_FOUND", body: commentBody },
     async ({ caller, params, body, requestId }) => {
       const id = await rpc("create_comment", { actor: identified(caller).userId, quote_id: params.id!, content: body.content }, { requestId });
       await syncCommentCount(params.id!);

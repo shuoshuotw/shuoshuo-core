@@ -528,7 +528,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Enums: {
-            "app_role": "admin","appeal_status": "pending"|"accepted"|"rejected","case_resolution": "dismiss"|"uphold"|"target_deleted","case_status": "open"|"resolved","comment_status": "visible"|"removed"|"deleted","commit_source": "web"|"api","quote_status": "published"|"under_review"|"removed"|"deleted","report_reason": "harassment"|"hate"|"sexual"|"violence"|"privacy"|"spam"|"misinformation"|"simplified_chinese"|"other","report_status": "pending"|"upheld"|"dismissed"|"voided","report_target": "quote"|"comment","sanction_kind": "submit_suspension"|"account_ban","sanction_source": "auto"|"manual","standing_status": "active"|"banned"
+            "app_role": "admin","appeal_status": "pending"|"accepted"|"rejected","case_resolution": "dismiss"|"uphold"|"target_deleted","case_status": "open"|"resolved","comment_status": "visible"|"removed"|"deleted","commit_source": "web"|"api","quote_status": "published"|"under_review"|"removed"|"deleted","report_reason": "harassment"|"hate"|"sexual"|"violence"|"privacy"|"spam"|"misinformation"|"simplified_chinese"|"other"|"self_harm"|"intellectual_property"|"security_risk","report_status": "pending"|"upheld"|"dismissed"|"voided","report_target": "quote"|"comment","sanction_kind": "submit_suspension"|"account_ban","sanction_source": "auto"|"manual","standing_status": "active"|"banned"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -648,7 +648,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["admin"],"appeal_status": ["pending", "accepted", "rejected"],"case_resolution": ["dismiss", "uphold", "target_deleted"],"case_status": ["open", "resolved"],"comment_status": ["visible", "removed", "deleted"],"commit_source": ["web", "api"],"quote_status": ["published", "under_review", "removed", "deleted"],"report_reason": ["harassment", "hate", "sexual", "violence", "privacy", "spam", "misinformation", "simplified_chinese", "other"],"report_status": ["pending", "upheld", "dismissed", "voided"],"report_target": ["quote", "comment"],"sanction_kind": ["submit_suspension", "account_ban"],"sanction_source": ["auto", "manual"],"standing_status": ["active", "banned"]
+            "app_role": ["admin"],"appeal_status": ["pending", "accepted", "rejected"],"case_resolution": ["dismiss", "uphold", "target_deleted"],"case_status": ["open", "resolved"],"comment_status": ["visible", "removed", "deleted"],"commit_source": ["web", "api"],"quote_status": ["published", "under_review", "removed", "deleted"],"report_reason": ["harassment", "hate", "sexual", "violence", "privacy", "spam", "misinformation", "simplified_chinese", "other", "self_harm", "intellectual_property", "security_risk"],"report_status": ["pending", "upheld", "dismissed", "voided"],"report_target": ["quote", "comment"],"sanction_kind": ["submit_suspension", "account_ban"],"sanction_source": ["auto", "manual"],"standing_status": ["active", "banned"]
           }
         }
 } as const

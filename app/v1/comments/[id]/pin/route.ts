@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 function setPin(pinned: boolean) {
   return withRoute(
-    { auth: "user_or_key", scope: "comments:write", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND" },
+    { auth: "user", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND" },
     async ({ caller, params, requestId }) => {
       const commentId = params.id!;
       let pinnedAt: string | null;

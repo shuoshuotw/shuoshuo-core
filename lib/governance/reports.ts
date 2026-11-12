@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { z } from "zod";
 import { ApiError } from "@/lib/http/api-error";
 import { iso } from "@/lib/http/pagination";
@@ -12,7 +13,14 @@ export async function createReport(
   body: z.infer<typeof reportBody>,
   requestId: string,
 ) {
-  const [created] = await rpc("create_report", { actor, target_type: target.type, target_id: target.id, ...body }, { requestId });
+  // A matter of taste is not a report: nothing is stored and no case opens, and the answer looks like any other
+  if (body.reason === "dislike") {
+    const { data, error } = await db().from(target.type === "quote" ? "quotes" : "comments").select("id").eq("id", target.id).maybeSingle();
+    if (error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: error });
+    if (!data) throw new ApiError(target.type === "quote" ? "QUOTE_NOT_FOUND" : "COMMENT_NOT_FOUND");
+    return json({ id: randomUUID(), status: "pending", created_at: iso(new Date().toISOString()) }, requestId, { status: 201 });
+  }
+  const [created] = await rpc("create_report", { actor, target_type: target.type, target_id: target.id, reason: body.reason, detail: body.detail }, { requestId });
   if (!created) throw new ApiError("INTERNAL_ERROR");
   if (created.became_under_review) removeQuote(target.id);
   const { data, error } = await db().from("reports").select("id, status, created_at").eq("id", created.report_id).single();

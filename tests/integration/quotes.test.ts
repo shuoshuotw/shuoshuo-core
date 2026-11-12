@@ -238,24 +238,28 @@ describe("quotes: writes, ownership and editing (ED-01/02/03/07/08/09)", () => {
     expect(data).toEqual({ original_content: response.data.content, content_hash: toBytea(contentHash(response.data.content)) });
   });
 
-  it("API Keys with quotes:write can create, edit and delete; commit_from stays api", async () => {
+  it("API Keys with quotes:write submit and nothing more: editing and deleting take the person signed in", async () => {
     const token = await keyFor(user, ["quotes:read", "quotes:write"]);
     const content = `金鑰提交${randomUUID()}`;
     const created = await request("/v1/quotes", { method: "POST", token, body: { content, category: "ai", source_from: "測試" } });
     expect(created.status).toBe(201);
     quoteIds.push(created.data.id);
     expectQuote(created.data, { content, commit_from: "api", category: { key: "ai", name: "AI" } });
-    const edited = await request(`/v1/quotes/${created.data.id}`, { method: "PATCH", token, body: { content: `${content}呀` } });
+    expectError(await request(`/v1/quotes/${created.data.id}`, { method: "PATCH", token, body: { content: `${content}呀` } }), "API_KEY_NOT_ALLOWED");
+    expectError(await request(`/v1/quotes/${created.data.id}`, { method: "DELETE", token }), "API_KEY_NOT_ALLOWED");
+    expect((await request(`/v1/quotes/${created.data.id}`)).data).toMatchObject({ content, edited_at: null });
+    // The owner, signed in, still can
+    const edited = await request(`/v1/quotes/${created.data.id}`, { method: "PATCH", token: user.token, body: { content: `${content}呀` } });
     expect(edited.status).toBe(200);
     expectMeta(edited);
     expectQuote(edited.data, { ...created.data, content: `${content}呀`, length: content.length + 1, edited_at: expect.stringMatching(ISO) });
-    const deleted = await request(`/v1/quotes/${created.data.id}`, { method: "DELETE", token });
+    const deleted = await request(`/v1/quotes/${created.data.id}`, { method: "DELETE", token: user.token });
     expect(deleted.status).toBe(204);
     expect(deleted.raw).toBe("");
     expect(deleted.headers.get("cache-control")).toBe("no-store");
   });
 
-  it("requires authentication and quotes:write on every write; rejects another user's PATCH and DELETE (ED-02)", async () => {
+  it("requires authentication on every write and quotes:write to submit; rejects another user's PATCH and DELETE (ED-02)", async () => {
     const row = await fixture(user);
     const readKey = await keyFor(user);
     for (const [path, method, body] of [
@@ -264,12 +268,11 @@ describe("quotes: writes, ownership and editing (ED-01/02/03/07/08/09)", () => {
       [`/v1/quotes/${row.id}`, "DELETE", undefined],
     ] as const) {
       expectError(await request(path, { method, body }), "AUTHENTICATION_REQUIRED");
-      expectError(await request(path, { method, body, token: readKey }), "INSUFFICIENT_SCOPE", { required_scope: "quotes:write" });
+      if (method === "POST") expectError(await request(path, { method, body, token: readKey }), "INSUFFICIENT_SCOPE", { required_scope: "quotes:write" });
+      else expectError(await request(path, { method, body, token: readKey }), "API_KEY_NOT_ALLOWED");
     }
-    for (const token of [other.token, await keyFor(other, ["quotes:read", "quotes:write"])]) {
-      expectError(await request(`/v1/quotes/${row.id}`, { method: "PATCH", token, body: { content: `${row.content}呀` } }), "NOT_RESOURCE_OWNER");
-      expectError(await request(`/v1/quotes/${row.id}`, { method: "DELETE", token }), "NOT_RESOURCE_OWNER");
-    }
+    expectError(await request(`/v1/quotes/${row.id}`, { method: "PATCH", token: other.token, body: { content: `${row.content}呀` } }), "NOT_RESOURCE_OWNER");
+    expectError(await request(`/v1/quotes/${row.id}`, { method: "DELETE", token: other.token }), "NOT_RESOURCE_OWNER");
     expect((await request(`/v1/quotes/${row.id}`)).data.content).toBe(row.content);
   });
 
@@ -284,16 +287,13 @@ describe("quotes: writes, ownership and editing (ED-01/02/03/07/08/09)", () => {
     }
   });
 
-  it("enforces Chinese language checks on both POST and PATCH (ED-03)", async () => {
-    const row = await fixture(user);
-    for (const [content, code, details] of [
-      [`hello${randomUUID()}`, "QUOTE_NO_HAN", undefined],
-      [`这说这${randomUUID()}`, "QUOTE_NOT_TRADITIONAL", { characters: ["这", "说"] }],
-    ] as const) {
-      expectError(await request("/v1/quotes", { method: "POST", token: user.token, body: { content, category: "original", source_from: "來源" } }), code, details);
-      expectError(await request(`/v1/quotes/${row.id}`, { method: "PATCH", token: user.token, body: { content } }), code, details);
+  it("takes a quote in any language: English alone, and characters once refused, are left to reports (D-18)", async () => {
+    for (const content of [`hello ${randomUUID()}`, `这说这${randomUUID()}`, `床前的車${randomUUID()}`]) {
+      const created = await request("/v1/quotes", { method: "POST", token: user.token, body: { content, category: "original", source_from: "來源" } });
+      expect(created.status).toBe(201);
+      quoteIds.push(created.data.id);
+      expect(created.data.content).toBe(content);
     }
-    expect((await request(`/v1/quotes/${row.id}`)).data.content).toBe(row.content);
   });
 
   it("deduplicates normalized POST and PATCH content, hides removed IDs and releases deleted hashes (ED-03)", async () => {
