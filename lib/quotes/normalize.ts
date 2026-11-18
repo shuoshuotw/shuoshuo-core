@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
 import { ApiError } from "@/lib/http/api-error";
-import { SIMPLIFIED_ONLY } from "@/lib/quotes/simplified-only";
 
 export const EDIT_CHANGE_LIMIT = 0.5;
 
-const HAN = /\p{Script=Han}/u;
 // Newline stays allowed. Control and zero-width characters can hide text from review (§8.3.4).
 const CONTROL = /[\p{Cc}]/u;
 const ZERO_WIDTH = /[​-‍⁠﻿]/u;
@@ -20,13 +18,6 @@ export function normalizeText(raw: string): string {
 export function hasForbiddenCharacters(content: string): boolean {
   const withoutNewlines = content.replace(/\r?\n/g, "");
   return CONTROL.test(withoutNewlines) || ZERO_WIDTH.test(withoutNewlines.replace(EMOJI_ZWJ, ""));
-}
-
-// §8.3.4 checks that answer 422 rather than a field-level 400
-export function assertQuoteLanguage(content: string): void {
-  if (!HAN.test(content)) throw new ApiError("QUOTE_NO_HAN");
-  const simplified = [...new Set(codePoints(content).filter((character) => SIMPLIFIED_ONLY.has(character)))];
-  if (simplified.length) throw new ApiError("QUOTE_NOT_TRADITIONAL", { details: { characters: simplified } });
 }
 
 function comparable(content: string): string {

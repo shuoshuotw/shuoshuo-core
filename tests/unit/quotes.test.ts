@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assertEditWithinLimit,
-  assertQuoteLanguage,
   changeRatio,
   contentHash,
   hasForbiddenCharacters,
@@ -46,21 +45,6 @@ describe("content rules (§8.3.4)", () => {
     expect(hasForbiddenCharacters("說‍說")).toBe(true);
     expect(hasForbiddenCharacters("說​說")).toBe(true);
     expect(hasForbiddenCharacters("說\u0007說")).toBe(true);
-  });
-
-  it("requires a Han character", () => {
-    expect(() => assertQuoteLanguage("hello")).toThrowError(expect.objectContaining({ code: "QUOTE_NO_HAN" }));
-    expect(() => assertQuoteLanguage("你好 hello")).not.toThrow();
-  });
-
-  it("rejects simplified-only characters and names them once each", () => {
-    expect(() => assertQuoteLanguage("这里这样说吧")).toThrowError(
-      expect.objectContaining({ code: "QUOTE_NOT_TRADITIONAL", details: { characters: ["这", "样", "说"] } }),
-    );
-  });
-
-  it("allows characters shared with traditional text", () => {
-    expect(() => assertQuoteLanguage("後來的后土，里長與天干地支")).not.toThrow();
   });
 
   it("hashes full-width, half-width and punctuation variants alike", () => {

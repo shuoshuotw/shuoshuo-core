@@ -166,7 +166,7 @@ describe.each(reactions)("$kind", ({ kind, active, count, table, handlers }) => 
   it("rejects missing reactions:write on both methods without writing", async () => {
     const owner = await newUser();
     const quoteId = await newQuote(owner);
-    const key = await newKey(owner, ["comments:write"]);
+    const key = await newKey(owner, ["me:read"]);
     for (const method of ["PUT", "DELETE"]) {
       expectError(await call(path(quoteId), { method, token: key }), 403, "INSUFFICIENT_SCOPE", { required_scope: "reactions:write" });
     }
@@ -209,21 +209,22 @@ describe.each(reactions)("$kind", ({ kind, active, count, table, handlers }) => 
 describe("comment pins", () => {
   const path = (id: string) => `/v1/comments/${id}/pin`;
 
-  it("PN-01: the quote owner can pin and unpin idempotently with JWT and scoped key", async () => {
+  it("PN-01: the quote owner, signed in, can pin and unpin idempotently; their API Key cannot", async () => {
     const owner = await newUser();
     const author = await newUser();
     const quoteId = await newQuote(owner);
     const commentId = await newComment(quoteId, author);
-    const key = await newKey(owner, ["comments:write"]);
+    const key = await newKey(owner, ["quotes:write"]);
     const first = await call(path(commentId.toUpperCase()), { method: "PUT", token: owner.token });
     const { pinned_at } = JSON.parse(first.raw).data;
     expect(pinned_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     expectSuccess(first, { comment_id: commentId, pinned_at });
-    expectSuccess(await call(path(commentId), { method: "PUT", token: key }), { comment_id: commentId, pinned_at }, 120);
+    expectSuccess(await call(path(commentId), { method: "PUT", token: owner.token }), { comment_id: commentId, pinned_at });
+    for (const method of ["PUT", "DELETE"]) expectError(await call(path(commentId), { method, token: key }), 403, "API_KEY_NOT_ALLOWED");
     const stored = await one(admin.from("comments").select("pinned_at").eq("id", commentId).single());
     expect(new Date(stored.pinned_at).toISOString()).toBe(pinned_at);
-    for (const [token, limit] of [[owner.token, 60], [key, 120]] as const) {
-      expectSuccess(await call(path(commentId), { method: "DELETE", token }), { comment_id: commentId, pinned_at: null }, limit);
+    for (let turn = 0; turn < 2; turn += 1) {
+      expectSuccess(await call(path(commentId), { method: "DELETE", token: owner.token }), { comment_id: commentId, pinned_at: null });
     }
     expect(await checked(admin.from("comments").select("pinned_at").eq("id", commentId).single())).toEqual({ pinned_at: null });
   });
@@ -298,13 +299,13 @@ describe("comment pins", () => {
     }
   });
 
-  it("enforces comments:write, resource IDs and the suspended/banned capability matrix", async () => {
+  it("refuses API Keys, and enforces resource IDs and the suspended/banned capability matrix", async () => {
     const owner = await newUser();
     const quoteId = await newQuote(owner);
     const commentId = await newComment(quoteId, owner);
     const key = await newKey(owner, ["reactions:write"]);
     for (const method of ["PUT", "DELETE"]) {
-      expectError(await call(path(commentId), { method, token: key }), 403, "INSUFFICIENT_SCOPE", { required_scope: "comments:write" });
+      expectError(await call(path(commentId), { method, token: key }), 403, "API_KEY_NOT_ALLOWED");
       for (const id of ["not-a-uuid", randomUUID()]) expectError(await call(path(id), { method, token: owner.token }), 404, "COMMENT_NOT_FOUND");
     }
     await checked(admin.from("account_standing").update({ suspended_until: new Date(Date.now() + 86_400_000).toISOString() }).eq("user_id", owner.id));

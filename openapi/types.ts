@@ -96,7 +96,7 @@ export interface paths {
          * 刪除自己的說說
          * @description 軟刪除，並自說說池移除。自刪後相同內容可重新提交；已被移除的說說不可刪除，否則可藉此重新提交違規內容。
          *
-         *     **驗證：** 使用者 JWT 或 API Key（API Key 需 `quotes:write`）。
+         *     **驗證：** 僅使用者 JWT；API Key 只能提交，不能更動已有的說說。
          */
         delete: operations["deleteQuote"];
         options?: never;
@@ -105,7 +105,7 @@ export interface paths {
          * 編輯自己的說說
          * @description 發布後 24 小時內可編輯，以資料庫時間判定；按讚與留言都保留（D-32）。Body 至少要有一個欄位。內容與發布時相比變更 ≥ 50% 時拒絕。
          *
-         *     **驗證：** 使用者 JWT 或 API Key（API Key 需 `quotes:write`）。
+         *     **驗證：** 僅使用者 JWT；API Key 只能提交，不能更動已有的說說。
          */
         patch: operations["updateQuote"];
         trace?: never;
@@ -183,7 +183,7 @@ export interface paths {
         put?: never;
         /**
          * 新增留言
-         * @description **驗證：** 使用者 JWT 或 API Key（API Key 需 `comments:write`）。
+         * @description **驗證：** 僅使用者 JWT。
          */
         post: operations["createComment"];
         delete?: never;
@@ -206,7 +206,7 @@ export interface paths {
          * 刪除自己的留言
          * @description 軟刪除。
          *
-         *     **驗證：** 使用者 JWT 或 API Key（API Key 需 `comments:write`）。
+         *     **驗證：** 僅使用者 JWT。
          */
         delete: operations["deleteComment"];
         options?: never;
@@ -215,7 +215,7 @@ export interface paths {
          * 編輯自己的留言
          * @description 發布後 20 分鐘內可編輯（D-33），以資料庫時間判定。
          *
-         *     **驗證：** 使用者 JWT 或 API Key（API Key 需 `comments:write`）。
+         *     **驗證：** 僅使用者 JWT。
          */
         patch: operations["updateComment"];
         trace?: never;
@@ -232,7 +232,7 @@ export interface paths {
          * 置頂留言
          * @description 呼叫者必須是該說說的提交者本人，`admin` 也不例外（D-34）。冪等；該說說已有其他置頂留言時會被取代。
          *
-         *     **驗證：** 使用者 JWT 或 API Key（API Key 需 `comments:write`）。
+         *     **驗證：** 僅使用者 JWT。
          */
         put: operations["pinComment"];
         post?: never;
@@ -240,7 +240,7 @@ export interface paths {
          * 取消置頂
          * @description 規格同置頂，冪等。
          *
-         *     **驗證：** 使用者 JWT 或 API Key（API Key 需 `comments:write`）。
+         *     **驗證：** 僅使用者 JWT。
          */
         delete: operations["unpinComment"];
         options?: never;
@@ -1007,9 +1007,17 @@ export interface components {
             };
         };
         /** @enum {string} */
-        ReportReason: "harassment" | "hate" | "sexual" | "violence" | "privacy" | "spam" | "misinformation" | "simplified_chinese" | "other";
-        /** @enum {string} */
-        ApiKeyScope: "quotes:read" | "quotes:write" | "reactions:write" | "comments:write" | "me:read";
+        ReportReason: "harassment" | "hate" | "self_harm" | "violence" | "spam" | "misinformation" | "sexual" | "privacy" | "intellectual_property" | "simplified_chinese" | "security_risk" | "other";
+        /**
+         * @description 檢舉時可選的原因。`dislike`（單純不喜歡）會得到與其他原因相同的回應，但不建立檢舉，也不進審核佇列。
+         * @enum {string}
+         */
+        ReportReasonInput: "harassment" | "hate" | "self_harm" | "violence" | "spam" | "misinformation" | "sexual" | "privacy" | "intellectual_property" | "simplified_chinese" | "security_risk" | "other" | "dislike";
+        /**
+         * @description `quotes:write` 只能提交新的說說；編輯、刪除與留言都需要使用者 JWT。
+         * @enum {string}
+         */
+        ApiKeyScope: "quotes:read" | "quotes:write" | "reactions:write" | "me:read";
         Quote: {
             /** Format: uuid */
             id: string;
@@ -1605,7 +1613,7 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    /** @description 先 trim 與 NFC 正規化；2 至 100 code point（D-19）；含至少 1 個漢字；不可含控制字元（換行除外）與零寬字元（Emoji 用 ZWJ 除外）；不含簡體專用字 */
+                    /** @description 先 trim 與 NFC 正規化；2 至 100 code point（D-19）；不可含控制字元（換行除外）與零寬字元（Emoji 用 ZWJ 除外） */
                     content: string;
                     /** @description 類別 key */
                     category: string;
@@ -1639,7 +1647,6 @@ export interface operations {
             409: components["responses"]["Error409"];
             413: components["responses"]["Error413"];
             415: components["responses"]["Error415"];
-            422: components["responses"]["Error422"];
             429: components["responses"]["Error429"];
             500: components["responses"]["Error500"];
             503: components["responses"]["Error503"];
@@ -1779,7 +1786,7 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    /** @description 先 trim 與 NFC 正規化；2 至 100 code point（D-19）；含至少 1 個漢字；不可含控制字元（換行除外）與零寬字元（Emoji 用 ZWJ 除外）；不含簡體專用字 */
+                    /** @description 先 trim 與 NFC 正規化；2 至 100 code point（D-19）；不可含控制字元（換行除外）與零寬字元（Emoji 用 ZWJ 除外） */
                     content?: string;
                     /** @description 類別 key */
                     category?: string;
@@ -2058,7 +2065,7 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    /** @description trim 與 NFC 後 1 至 500 code point；無控制字元（換行除外）；不做繁體驗證 */
+                    /** @description trim 與 NFC 後 1 至 500 code point；無控制字元（換行除外） */
                     content: string;
                 };
             };
@@ -2145,7 +2152,7 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    /** @description trim 與 NFC 後 1 至 500 code point；無控制字元（換行除外）；不做繁體驗證 */
+                    /** @description trim 與 NFC 後 1 至 500 code point；無控制字元（換行除外） */
                     content: string;
                 };
             };
@@ -2286,7 +2293,7 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    reason: components["schemas"]["ReportReason"];
+                    reason: components["schemas"]["ReportReasonInput"];
                     /** @description reason 為 other 時必填，否則選填 */
                     detail?: string;
                 };
@@ -2348,7 +2355,7 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    reason: components["schemas"]["ReportReason"];
+                    reason: components["schemas"]["ReportReasonInput"];
                     /** @description reason 為 other 時必填，否則選填 */
                     detail?: string;
                 };

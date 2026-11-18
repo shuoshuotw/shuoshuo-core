@@ -51,6 +51,31 @@ describe("reports", () => {
     expectError(await call("/v1/quotes/not-a-uuid/reports", { method: "POST", token: other.token, body: { reason: "spam" } }), 404, "QUOTE_NOT_FOUND");
   });
 
+  it("answers a report of mere dislike like any other and keeps nothing: no report, no case, and it may be sent again", async () => {
+    const owner = await newUser();
+    const reporter = await newUser();
+    const quoteId = await newQuote(owner);
+    const path = `/v1/quotes/${quoteId}/reports`;
+    for (let turn = 0; turn < 2; turn += 1) {
+      const response = await call(path, { method: "POST", token: reporter.token, body: { reason: "dislike" } });
+      expect(response.status).toBe(201);
+      expect(response.data).toEqual({ id: expect.any(String), status: "pending", created_at: expect.stringMatching(ISO) });
+    }
+    expect(await checked(admin.from("reports").select("id").eq("target_id", quoteId))).toEqual([]);
+    expect(await checked(admin.from("moderation_cases").select("id").eq("target_id", quoteId))).toEqual([]);
+    expectError(await call(`/v1/quotes/${randomUUID()}/reports`, { method: "POST", token: reporter.token, body: { reason: "dislike" } }), 404, "QUOTE_NOT_FOUND");
+    // The reasons added with it are real reports
+    for (const reason of ["self_harm", "intellectual_property", "security_risk"]) {
+      const target = await newQuote(owner);
+      expect((await call(`/v1/quotes/${target}/reports`, { method: "POST", token: reporter.token, body: { reason } })).status).toBe(201);
+      expect(await checked(admin.from("reports").select("reason").eq("target_id", target))).toEqual([{ reason }]);
+    }
+    // Deciding a case never takes dislike as its reason
+    const caseId = (await checked(admin.from("moderation_cases").select("id").eq("status", "open").limit(1).single())).id;
+    const moderator = await newAdmin();
+    expectError(await call(`/v1/admin/cases/${caseId}/resolve`, { method: "POST", token: moderator.token, body: { resolution: "uphold", final_reason: "dislike" } }), 400, "VALIDATION_FAILED");
+  });
+
   it("GOV-18: three new accounts open a case but do not trigger under_review; three aged accounts do", async () => {
     const owner = await newUser();
     const quoteId = await newQuote(owner);

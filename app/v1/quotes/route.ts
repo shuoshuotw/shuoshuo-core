@@ -2,7 +2,7 @@ import { toBytea } from "@/lib/auth/api-key";
 import { ApiError } from "@/lib/http/api-error";
 import { decodeCursor, olderThan, pageOf } from "@/lib/http/pagination";
 import { identified, json, jsonList, route, withRoute } from "@/lib/http/with-route";
-import { assertQuoteLanguage, contentHash } from "@/lib/quotes/normalize";
+import { contentHash } from "@/lib/quotes/normalize";
 import { upsertQuote } from "@/lib/quotes/pool";
 import { QUOTE_SELECT, type QuoteRow, toQuote } from "@/lib/quotes/serialize";
 import { db, rpc } from "@/lib/supabase";
@@ -29,7 +29,6 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     { auth: "user_or_key", scope: "quotes:write", rate: "RL-WRITE", cache: "C-NONE", body: createQuoteBody },
     async ({ caller, body, requestId }) => {
       const actor = identified(caller);
-      assertQuoteLanguage(body.content);
       const id = await rpc("create_quote", {
         actor: actor.userId,
         ...body,

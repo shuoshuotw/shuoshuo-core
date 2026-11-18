@@ -10,7 +10,7 @@ type ApiKey = components["schemas"]["ApiKey"];
 type SecretKey = components["schemas"]["ApiKeyWithSecret"];
 type Reply = Awaited<ReturnType<typeof call>>;
 const ROOT = "/v1/me/api-keys";
-const ALL_SCOPES = ["quotes:read", "quotes:write", "reactions:write", "comments:write", "me:read"];
+const ALL_SCOPES = ["quotes:read", "quotes:write", "reactions:write", "me:read"];
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const users: TestUser[] = [];
 
@@ -135,7 +135,7 @@ describe("API key management (SEC-04 through SEC-08)", () => {
     const user = await newUser();
     const bodies = [
       {}, null, [], { name: "" }, { name: "名".repeat(51) }, { name: "😀".repeat(51) }, { name: 42 },
-      { name: "有效", scopes: ["admin"] }, { name: "有效", scopes: null }, { name: "有效", scopes: "quotes:read" },
+      { name: "有效", scopes: ["admin"] }, { name: "有效", scopes: ["comments:write"] }, { name: "有效", scopes: null }, { name: "有效", scopes: "quotes:read" },
       { name: "有效", scopes: [1] }, { name: "有效", secret: "unexpected" },
     ];
     for (const body of bodies) {

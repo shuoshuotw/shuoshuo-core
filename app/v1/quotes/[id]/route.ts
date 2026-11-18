@@ -1,7 +1,7 @@
 import { toBytea } from "@/lib/auth/api-key";
 import { ApiError } from "@/lib/http/api-error";
 import { identified, json, noContent, route, text, withRoute } from "@/lib/http/with-route";
-import { assertEditWithinLimit, assertQuoteLanguage, contentHash } from "@/lib/quotes/normalize";
+import { assertEditWithinLimit, contentHash } from "@/lib/quotes/normalize";
 import { removeQuote, upsertQuote } from "@/lib/quotes/pool";
 import { QUOTE_SELECT, type QuoteRow, toQuote } from "@/lib/quotes/serialize";
 import { db, rpc } from "@/lib/supabase";
@@ -27,13 +27,12 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
   ),
   PATCH: withRoute(
     {
-      auth: "user_or_key", scope: "quotes:write", rate: "RL-WRITE", cache: "C-NONE",
+      auth: "user", rate: "RL-WRITE", cache: "C-NONE",
       idNotFound: "QUOTE_NOT_FOUND", body: updateQuoteBody,
     },
     async ({ caller, params, body, requestId }) => {
       const actor = identified(caller);
       if (body.content !== undefined) {
-        assertQuoteLanguage(body.content);
         // Only compare the owner's published content; the RPC decides ownership and lifecycle errors.
         const { data, error } = await db().from("quotes").select("original_content")
           .eq("id", params.id!).eq("submitter_id", actor.userId).eq("status", "published").maybeSingle();
@@ -52,7 +51,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     },
   ),
   DELETE: withRoute(
-    { auth: "user_or_key", scope: "quotes:write", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "QUOTE_NOT_FOUND" },
+    { auth: "user", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "QUOTE_NOT_FOUND" },
     async ({ caller, params, requestId }) => {
       const { data, error } = await db().from("quotes").select("category_key, status").eq("id", params.id!).maybeSingle();
       if (error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: error });

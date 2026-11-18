@@ -15,7 +15,7 @@ function commentError(error: unknown): never {
 
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
   PATCH: withRoute(
-    { auth: "user_or_key", scope: "comments:write", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND", body: commentBody },
+    { auth: "user", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND", body: commentBody },
     async ({ caller, params, body, requestId }) => {
       const id = await rpc("update_comment", { actor: identified(caller).userId, comment_id: params.id!, content: body.content }, { requestId }).catch(commentError);
       const { data, error } = await db().from("comments").select(COMMENT_SELECT).eq("id", id).single();
@@ -24,7 +24,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
     },
   ),
   DELETE: withRoute(
-    { auth: "user_or_key", scope: "comments:write", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND" },
+    { auth: "user", rate: "RL-WRITE", cache: "C-NONE", idNotFound: "COMMENT_NOT_FOUND" },
     async ({ caller, params, requestId }) => {
       const comment = await db().from("comments").select("quote_id").eq("id", params.id!).maybeSingle();
       if (comment.error) throw new ApiError("SERVICE_UNAVAILABLE", { cause: comment.error });

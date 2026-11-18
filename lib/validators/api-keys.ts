@@ -6,7 +6,7 @@ export const createApiKey = z.strictObject({
     const length = codePoints(value).length;
     return length >= 1 && length <= 50;
   }, "須為 1 至 50 字"),
-  scopes: z.array(z.enum(["quotes:read", "quotes:write", "reactions:write", "comments:write", "me:read"]))
+  scopes: z.array(z.enum(["quotes:read", "quotes:write", "reactions:write", "me:read"]))
     .default(["quotes:read"])
     .transform((scopes) => [...new Set(["quotes:read", ...scopes])]),
   // §8.8.2: null is a key without an end date, which the account must allow first

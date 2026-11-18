@@ -2,9 +2,11 @@ import { z } from "zod";
 import { paginationQuery } from "@/lib/http/pagination";
 import { reasonText, textField } from "@/lib/validators/common";
 
-const reportReason = z.enum([
-  "harassment", "hate", "sexual", "violence", "privacy", "spam", "misinformation", "simplified_chinese", "other",
-]);
+const REASONS = [
+  "harassment", "hate", "self_harm", "violence", "spam", "misinformation", "sexual", "privacy", "intellectual_property",
+  "simplified_chinese", "security_risk", "other",
+] as const;
+const reportReason = z.enum(REASONS);
 
 // §9.8
 const auditAction = z.enum([
@@ -14,7 +16,8 @@ const auditAction = z.enum([
 ]);
 
 export const reportBody = z
-  .strictObject({ reason: reportReason, detail: reasonText.optional() })
+  // `dislike` is taken and answered like any report, and never becomes one (§9.2)
+  .strictObject({ reason: z.enum([...REASONS, "dislike"]), detail: reasonText.optional() })
   .refine((body) => body.reason !== "other" || body.detail !== undefined, { path: ["detail"], message: "原因為其他時必填" });
 
 export const appealBody = z.strictObject({

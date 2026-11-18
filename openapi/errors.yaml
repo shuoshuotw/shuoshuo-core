@@ -150,16 +150,6 @@ QUOTE_DUPLICATE:
   message: 存在相同的說說
   message_en: This quote already exists
   condition: 雜湊已存在且狀態非 deleted；details.existing_id（若該說說已被移除則為 null）
-QUOTE_NOT_TRADITIONAL:
-  status: 422
-  message: 僅接受繁體中文
-  message_en: Traditional Chinese only
-  condition: 含簡體專用字；details.characters
-QUOTE_NO_HAN:
-  status: 422
-  message: 說說中需包含中文
-  message_en: The quote must contain Chinese characters
-  condition: 無漢字
 NOT_RESOURCE_OWNER:
   status: 403
   message: 只能變更自己的說說

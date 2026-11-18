@@ -149,16 +149,6 @@
     "message": "存在相同的說說",
     "message_en": "This quote already exists"
   },
-  "QUOTE_NOT_TRADITIONAL": {
-    "status": 422,
-    "message": "僅接受繁體中文",
-    "message_en": "Traditional Chinese only"
-  },
-  "QUOTE_NO_HAN": {
-    "status": 422,
-    "message": "說說中需包含中文",
-    "message_en": "The quote must contain Chinese characters"
-  },
   "NOT_RESOURCE_OWNER": {
     "status": 403,
     "message": "只能變更自己的說說",

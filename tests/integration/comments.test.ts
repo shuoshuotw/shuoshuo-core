@@ -182,18 +182,17 @@ describe("comments", () => {
     }
   });
 
-  it("requires comments:write for all three mutations and accepts a scoped key", async () => {
+  it("takes the person signed in for all three mutations: an API Key is refused, whatever scopes it was given", async () => {
     const id = await fixtureComment(owner, quoteId);
-    const read = await keyFor(owner, ["quotes:read"]);
-    const write = await keyFor(owner, ["quotes:read", "comments:write"]);
+    // The second is a key from before comments left the scopes
+    const keys = [await keyFor(owner, ["quotes:read", "quotes:write"]), await keyFor(owner, ["quotes:read", "comments:write"])];
     for (const [method, path] of [["POST", `/v1/quotes/${quoteId}/comments`], ["PATCH", `/v1/comments/${id}`], ["DELETE", `/v1/comments/${id}`]]) {
       const options = { method, ...(method === "DELETE" ? {} : { body: { content: "key comment" } }) };
       expectError(await call(path!, options), 401, "AUTHENTICATION_REQUIRED");
-      const denied = await call(path!, { ...options, token: read });
-      expectError(denied, 403, "INSUFFICIENT_SCOPE");
-      expect(denied.error?.details).toEqual({ required_scope: "comments:write" });
-      expect((await call(path!, { ...options, token: write })).status).toBe(method === "POST" ? 201 : method === "PATCH" ? 200 : 204);
+      for (const token of keys) expectError(await call(path!, { ...options, token }), 403, "API_KEY_NOT_ALLOWED");
     }
+    // Reading them needs nothing
+    expect((await call(`/v1/quotes/${quoteId}/comments`, { token: keys[0] })).status).toBe(200);
   });
 
   it("ED-06: edits within 20 minutes succeed; expired edits fail without changing the row", async () => {
@@ -221,12 +220,9 @@ describe("comments", () => {
     const until = new Date(Date.now() + 3600_000).toISOString();
     const suspended = await admin.from("account_standing").update({ suspended_until: until }).eq("user_id", user.id);
     if (suspended.error) throw suspended.error;
-    // The account's own API Keys are held back with it
-    const key = await keyFor(user, ["quotes:read", "comments:write"]);
     for (const response of [
       await patchComment(id, user),
       await call(`/v1/quotes/${quoteId}/comments`, { method: "POST", token: user.token, body: { content: "suspended" } }),
-      await call(`/v1/quotes/${quoteId}/comments`, { method: "POST", token: key, body: { content: "suspended" } }),
     ]) {
       expectError(response, 403, "COMMENTING_SUSPENDED");
       expect(response.error?.details).toEqual({ until });
