@@ -66,6 +66,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
       ...toCaseSummary(row, target ? previewOf(target.content) : null),
       resolution: row.resolution,
       final_reason: row.final_reason,
+      penalized: row.penalized,
       target: target?.body ?? null,
       reports: reports.data.map((report) => ({ ...report, created_at: iso(report.created_at) })),
       subject,

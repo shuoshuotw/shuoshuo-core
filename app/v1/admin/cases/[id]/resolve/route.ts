@@ -36,6 +36,7 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = route({
         resolution: body.resolution,
         ...(body.final_reason ? { final_reason: body.final_reason } : {}),
         ...(body.note ? { note: body.note } : {}),
+        ...(body.penalize !== undefined ? { penalize: body.penalize } : {}),
       }, { requestId }) as { target_status: string };
 
       if (quote && effects.target_status === "removed") removeQuote(targetId, quote.category.key);

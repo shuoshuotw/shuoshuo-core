@@ -34,8 +34,15 @@ export const casesQuery = paginationQuery.extend({
 });
 
 export const resolveCaseBody = z
-  .strictObject({ resolution: z.enum(["dismiss", "uphold"]), final_reason: reportReason.optional(), note: textField(0, 1000).optional() })
-  .refine((body) => body.resolution !== "uphold" || body.final_reason !== undefined, { path: ["final_reason"], message: "確認違規時必填" });
+  .strictObject({
+    resolution: z.enum(["dismiss", "uphold"]),
+    final_reason: reportReason.optional(),
+    note: textField(0, 1000).optional(),
+    // false: upheld without a penalty, the content taken down and nothing recorded against its author (§9.4)
+    penalize: z.boolean().optional(),
+  })
+  .refine((body) => body.resolution !== "uphold" || body.final_reason !== undefined, { path: ["final_reason"], message: "確認違規時必填" })
+  .refine((body) => body.resolution === "uphold" || body.penalize === undefined, { path: ["penalize"], message: "僅確認違規時可指定" });
 
 export const adminAppealsQuery = paginationQuery.extend({
   status: z.enum(["pending", "accepted", "rejected"]).default("pending"),
@@ -52,6 +59,9 @@ export const sanctionBody = z
   .refine((body) => body.kind !== "submit_suspension" || body.duration_days !== undefined, { path: ["duration_days"], message: "停權時必填" });
 
 export const reasonBody = z.strictObject({ reason: reasonText });
+
+// A lift may go without a reason
+export const liftBody = z.strictObject({ reason: reasonText.optional() });
 
 export const auditLogsQuery = paginationQuery.extend({
   actor_id: z.uuid().optional(),

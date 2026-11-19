@@ -87,7 +87,7 @@ export type Database = {
 { Args: { "actor": string,"reason": string,"target": string }; Returns: undefined
                            },
 "lift_sanction":
-{ Args: { "actor": string,"reason": string,"sanction_id": string }; Returns: Json
+{ Args: { "actor": string,"reason"?: string,"sanction_id": string }; Returns: Json
                            },
 "lock_standing":
 { Args: { "actor": string,"exclusive"?: boolean }; Returns: Database["public"]['Tables']["account_standing"]['Row']
@@ -124,7 +124,7 @@ export type Database = {
 { Args: { "actor": string,"appeal_id": string,"decision": string,"note": string }; Returns: Json
                            },
 "resolve_case":
-{ Args: { "actor": string,"case_id": string,"final_reason"?: Database["public"]['Enums']["report_reason"],"note"?: string,"resolution": Database["public"]['Enums']["case_resolution"] }; Returns: Json
+{ Args: { "actor": string,"case_id": string,"final_reason"?: Database["public"]['Enums']["report_reason"],"note"?: string,"penalize"?: boolean,"resolution": Database["public"]['Enums']["case_resolution"] }; Returns: Json
                            },
 "restore_expired_reviews":
 { Args: Record<PropertyKey, never>; Returns: number
@@ -297,14 +297,14 @@ isOneToOne: false
                   ]
                 },"moderation_cases": {
                   Row: {
-                    "created_at": string,"effective_reporter_count": number,"final_reason": Database["public"]['Enums']["report_reason"] | null,"id": string,"resolution": Database["public"]['Enums']["case_resolution"] | null,"resolved_at": string | null,"resolved_by": string | null,"review_expired_at": string | null,"reviewer_note": string | null,"status": Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
+                    "created_at": string,"effective_reporter_count": number,"final_reason": Database["public"]['Enums']["report_reason"] | null,"id": string,"penalized": boolean | null,"resolution": Database["public"]['Enums']["case_resolution"] | null,"resolved_at": string | null,"resolved_by": string | null,"review_expired_at": string | null,"reviewer_note": string | null,"status": Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"review_expired_at"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
+                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"penalized"?: boolean | null,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"review_expired_at"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id": string,"target_type": Database["public"]['Enums']["report_target"]
                   }
                   Update: {
-                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"review_expired_at"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id"?: string,"target_type"?: Database["public"]['Enums']["report_target"]
+                    "created_at"?: string,"effective_reporter_count"?: number,"final_reason"?: Database["public"]['Enums']["report_reason"] | null,"id"?: string,"penalized"?: boolean | null,"resolution"?: Database["public"]['Enums']["case_resolution"] | null,"resolved_at"?: string | null,"resolved_by"?: string | null,"review_expired_at"?: string | null,"reviewer_note"?: string | null,"status"?: Database["public"]['Enums']["case_status"],"target_id"?: string,"target_type"?: Database["public"]['Enums']["report_target"]
                   }
                   Relationships: [
                     

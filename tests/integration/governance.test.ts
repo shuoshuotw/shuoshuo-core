@@ -235,6 +235,25 @@ describe("resolving cases", () => {
     expect(await checked(admin.from("audit_logs").select("action").eq("target_id", caseId))).toEqual([{ action: "case.resolve" }]);
   });
 
+  it("uphold without a penalty removes the quote and records nothing against its author", async () => {
+    const { owner, quoteId, caseId } = await reportedQuote();
+    expectError(await resolve(caseId, moderator.token, { resolution: "dismiss", penalize: false }), 400, "VALIDATION_FAILED");
+    const response = await resolve(caseId, moderator.token, { resolution: "uphold", final_reason: "spam", penalize: false });
+    expect(response.status, response.raw).toBe(200);
+    expect(response.data).toEqual({
+      case_id: caseId, resolution: "uphold",
+      effects: { target_status: "removed", violation_id: null, strike_count: null, sanction: null, api_keys_revoked: 0 },
+    });
+    expectError(await call(`/v1/quotes/${quoteId}`), 410, "QUOTE_REMOVED");
+    expect((await call("/v1/me/violations", { token: owner.token })).data).toEqual([]);
+    expect((await call("/v1/me/sanctions", { token: owner.token })).data).toEqual([]);
+    expect(await checked(admin.from("account_standing").select("strike_count, suspended_until").eq("user_id", owner.id).single()))
+      .toEqual({ strike_count: 0, suspended_until: null });
+    expect(await checked(admin.from("reports").select("status").eq("case_id", caseId))).toEqual([{ status: "upheld" }]);
+    const detail = await call(`/v1/admin/cases/${caseId}`, { token: moderator.token });
+    expect(detail.data).toMatchObject({ status: "resolved", resolution: "uphold", final_reason: "spam", penalized: false });
+  });
+
   it("dismiss restores an under_review quote without any strike", async () => {
     const { owner, quoteId, caseId } = await reportedQuote();
     await checked(admin.from("quotes").update({ status: "under_review", under_review_since: new Date().toISOString() }).eq("id", quoteId));
@@ -419,7 +438,8 @@ describe("user administration", () => {
     expect((detail.data as unknown as { sanctions: unknown[] }).sanctions).toHaveLength(2);
     expect(detail.raw).not.toContain(user.email);
 
-    const lifted = await call(`/v1/admin/sanctions/${sanctionId}/lift`, { method: "POST", token: moderator.token, body: { reason: "解除" } });
+    // A lift's reason may be left out
+    const lifted = await call(`/v1/admin/sanctions/${sanctionId}/lift`, { method: "POST", token: moderator.token, body: {} });
     expect(lifted.status, lifted.raw).toBe(200);
     expect(lifted.data).toEqual({ sanction_id: sanctionId, lifted_at: expect.stringMatching(ISO), standing: expect.objectContaining({ status: "suspended", strike_count: 0 }) });
     expectError(await call(`/v1/admin/sanctions/${sanctionId}/lift`, { method: "POST", token: moderator.token, body: { reason: "再次" } }), 409, "SANCTION_ALREADY_LIFTED");
