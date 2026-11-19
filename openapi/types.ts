@@ -1265,6 +1265,8 @@ export interface components {
             /** @enum {string|null} */
             resolution: "dismiss" | "uphold" | "target_deleted" | null;
             final_reason: components["schemas"]["ReportReason"] | null;
+            /** @description 確認違規時是否處分（false 為只移除內容）；其他結果為 null */
+            penalized: boolean | null;
             /** @description 留言已隨帳號刪除時為 null */
             target: components["schemas"]["OwnQuote"] | components["schemas"]["Comment"] | null;
             reports: {
@@ -3256,6 +3258,11 @@ export interface operations {
                     final_reason?: components["schemas"]["ReportReason"];
                     /** @description 不公開 */
                     note?: string;
+                    /**
+                     * @description 僅 uphold 時可指定。false 為確認違規但不處分：照樣移除內容，但不新增違規紀錄、不計違規次數、不處分
+                     * @default true
+                     */
+                    penalize?: boolean;
                 };
             };
         };
@@ -3562,7 +3569,8 @@ export interface operations {
                  *     }
                  */
                 "application/json": {
-                    reason: string;
+                    /** @description 選填 */
+                    reason?: string;
                 };
             };
         };

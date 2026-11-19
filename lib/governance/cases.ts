@@ -3,7 +3,7 @@ import { iso } from "@/lib/http/pagination";
 import { codePoints } from "@/lib/quotes/normalize";
 import { db } from "@/lib/supabase";
 
-export const CASE_SELECT = "id, target_type, target_id, status, effective_reporter_count, created_at, resolution, final_reason, reports(reason)";
+export const CASE_SELECT = "id, target_type, target_id, status, effective_reporter_count, created_at, resolution, final_reason, penalized, reports(reason)";
 
 export type CaseRow = {
   id: string;
@@ -14,6 +14,7 @@ export type CaseRow = {
   created_at: string;
   resolution: string | null;
   final_reason: string | null;
+  penalized: boolean | null;
   reports: { reason: string }[];
 };
 
